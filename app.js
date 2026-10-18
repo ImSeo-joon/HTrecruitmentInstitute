@@ -437,7 +437,14 @@ function render() {
 }
 
 function renderHomePage() {
-  const orbitCompanies = COMPANIES.slice(0, 8);
+  const hongKongOrbit = ["hkex", "cathay", "mtr", "hangseng"];
+  const orbitIds =
+    state.lang === "zh"
+      ? ["huawei", "bytedance", "tencent", "alibaba", ...hongKongOrbit]
+      : ["google", "meta", "openai", "nvidia", ...hongKongOrbit];
+  const orbitCompanies = orbitIds.map(getCompany).filter(Boolean);
+  const orbitScope =
+    state.lang === "zh" ? t("home.orbitScopeCn") : t("home.orbitScopeGlobal");
   const payArchetypes = [
     { label: t("home.payAi"), mix: { base: 50, bonus: 0, equity: 50 } },
     { label: t("home.payBigTech"), mix: { base: 60, bonus: 12, equity: 28 } },
@@ -464,9 +471,15 @@ function renderHomePage() {
   const orbitNodes = orbitCompanies
     .map(
       (company, index) => `
-        <div class="orbit-node node-${index + 1}" style="--node-color:${company.color}">
+        <div class="orbit-node node-${index + 1}" style="--node-color:${company.color}" title="${escapeHtml(company.name)}">
           <span class="node-mark">${escapeHtml(company.mark)}</span>
-          <span class="node-name">${escapeHtml(company.name)}</span>
+          <span class="node-name">${escapeHtml(
+            company.id === "cathay"
+              ? "Cathay"
+              : company.id === "hangseng"
+                ? "Hang Seng"
+                : company.name
+          )}</span>
         </div>`
     )
     .join("");
@@ -504,7 +517,7 @@ function renderHomePage() {
         </div>
       </div>
       <div class="hero-visual">
-        <span class="visual-coordinate top">GLOBAL / 37.7749° N</span>
+        <span class="visual-coordinate top">${orbitScope}</span>
         <span class="visual-coordinate left">PUBLIC SIGNAL / 2026.10</span>
         <div class="signal-orbit" aria-label="${t("home.orbitLabel")}">
           <span class="orbit-ring ring-1"></span>
@@ -516,7 +529,7 @@ function renderHomePage() {
           <span class="orbit-axis axis-c"></span>
           <div class="orbit-core">
             <img class="orbit-logo" src="./assets/high-table-logo.jpg" alt="High Table Recruitment Institute">
-            <span class="orbit-core-label">${t("home.orbitLabel")}</span>
+            <span class="orbit-core-label">${orbitScope}</span>
           </div>
           ${orbitNodes}
           <div class="orbit-readout">

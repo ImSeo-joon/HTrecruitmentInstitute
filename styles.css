@@ -1114,6 +1114,20 @@ html[data-lang="zh"] .section-head h2 {
   min-height: 610px;
 }
 
+.hero-visual::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: -8%;
+  background: radial-gradient(
+    circle at 50% 47%,
+    rgba(7, 10, 15, 0.82) 0%,
+    rgba(7, 10, 15, 0.48) 44%,
+    rgba(7, 10, 15, 0) 72%
+  );
+  pointer-events: none;
+}
+
 .visual-coordinate {
   position: absolute;
   color: var(--muted-2);
@@ -1134,6 +1148,7 @@ html[data-lang="zh"] .section-head h2 {
 
 .signal-orbit {
   position: relative;
+  z-index: 1;
   width: min(100%, 590px);
   aspect-ratio: 1;
   margin-left: auto;
@@ -1234,12 +1249,12 @@ html[data-lang="zh"] .section-head h2 {
   position: absolute;
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 7px 9px 7px 7px;
-  border: 1px solid var(--line);
-  border-radius: 5px;
-  background: rgba(9, 14, 20, 0.88);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  gap: 9px;
+  padding: 9px 12px 9px 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: rgba(9, 14, 20, 0.94);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.34);
   backdrop-filter: blur(8px);
   animation: nodeFloat 6s ease-in-out infinite;
 }
@@ -1259,13 +1274,13 @@ html[data-lang="zh"] .section-head h2 {
 
 .node-mark {
   display: grid;
-  width: 23px;
-  height: 23px;
-  border-radius: 4px;
+  width: 31px;
+  height: 31px;
+  border-radius: 7px;
   color: var(--node-color, var(--paper));
   background: color-mix(in srgb, var(--node-color, var(--paper)) 11%, transparent);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   place-items: center;
 }
@@ -1273,17 +1288,18 @@ html[data-lang="zh"] .section-head h2 {
 .node-name {
   color: var(--paper-soft);
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 10px;
+  font-weight: 500;
   letter-spacing: 0.03em;
 }
 
 .node-1 { top: 8%; left: 28%; }
 .node-2 { top: 18%; right: 1%; }
-.node-3 { top: 45%; right: -3%; }
-.node-4 { bottom: 18%; right: 3%; }
+.node-3 { top: 45%; right: 0; }
+.node-4 { bottom: 18%; right: 1%; }
 .node-5 { bottom: 4%; left: 34%; }
-.node-6 { bottom: 23%; left: -2%; }
-.node-7 { top: 26%; left: -3%; }
+.node-6 { bottom: 23%; left: 0; }
+.node-7 { top: 26%; left: 0; }
 .node-8 { top: 3%; right: 23%; }
 
 .orbit-readout {
@@ -4735,26 +4751,29 @@ html[data-lang="zh"] .section-head h2 {
   }
 
   .orbit-node {
-    padding: 5px 6px;
+    gap: 6px;
+    padding: 7px 8px 7px 7px;
+    border-radius: 6px;
   }
 
   .node-mark {
-    width: 20px;
-    height: 20px;
-    font-size: 8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    font-size: 9px;
   }
 
   .node-name {
-    font-size: 7px;
+    font-size: 8px;
   }
 
   .node-1 { top: 5%; left: 21%; }
   .node-2 { top: 12%; right: 0; }
-  .node-3 { top: 43%; right: -2%; }
+  .node-3 { top: 43%; right: -1%; }
   .node-4 { bottom: 16%; right: 0; }
   .node-5 { bottom: 0; left: 25%; }
-  .node-6 { bottom: 20%; left: -2%; }
-  .node-7 { top: 24%; left: -2%; }
+  .node-6 { bottom: 20%; left: -1%; }
+  .node-7 { top: 24%; left: -1%; }
   .node-8 { top: 0; right: 18%; }
 
   .orbit-readout {

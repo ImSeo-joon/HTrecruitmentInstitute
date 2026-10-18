@@ -1,4 +1,4 @@
-const CACHE_NAME = "high-table-shell-v9";
+const CACHE_NAME = "high-table-shell-v11";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -18,8 +18,10 @@ const APP_SHELL = [
   "./assets/icons/favicon-rounded.ico",
   "./assets/icons/favicon-rounded-32.png",
   "./assets/icons/favicon-rounded-64.png",
-  "./assets/icons/icon-192.png",
-  "./assets/icons/icon-512.png",
+  "./assets/icons/icon-rounded-192.png",
+  "./assets/icons/icon-rounded-256.png",
+  "./assets/icons/icon-rounded-384.png",
+  "./assets/icons/icon-rounded-512.png",
   "./assets/icons/icon-maskable-512.png",
   "./assets/fonts/syne-700.woff2",
   "./assets/fonts/syne-800.woff2",
