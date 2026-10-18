@@ -1,4 +1,4 @@
-const CACHE_NAME = "high-table-shell-v11";
+const CACHE_NAME = "high-table-shell-v18";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -10,6 +10,7 @@ const APP_SHELL = [
   "./data-roles.js",
   "./data-resources.js",
   "./data-prompts.js",
+  "./data-workflows.js",
   "./site.webmanifest",
   "./assets/high-table-background.jpg",
   "./assets/high-table-logo.jpg",

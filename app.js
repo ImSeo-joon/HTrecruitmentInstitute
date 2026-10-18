@@ -18,11 +18,15 @@ import {
   PROMPT_CATEGORIES,
   getPrompt
 } from "./data-prompts.js";
+import { DECISION_NODES, getWorkflowTrack } from "./data-workflows.js";
 
 const STORAGE = {
   lang: "ht.lang.v1",
   saved: "ht.saved.v1",
-  history: "ht.history.v1"
+  history: "ht.history.v1",
+  workflowRole: "ht.workflowRole.v1",
+  workflowDrafts: "ht.workflowDrafts.v1",
+  workflowDecisionStats: "ht.workflowDecisionStats.v1"
 };
 
 const TYPE_LABELS = {
@@ -64,6 +68,24 @@ const state = {
   route: routeFromHash(),
   saved: safeParse(localStorage.getItem(STORAGE.saved), { roles: [], resources: [] }),
   history: safeParse(localStorage.getItem(STORAGE.history), []),
+  workflowRoleId: localStorage.getItem(STORAGE.workflowRole) || "google-senior-swe",
+  workflowDrafts: safeParse(localStorage.getItem(STORAGE.workflowDrafts), {}),
+  workflowStep: 0,
+  workflowEdit: false,
+  workflowWalk: false,
+  workflowWalkStep: 0,
+  workflowWalkDone: false,
+  workflowDecisionStats: safeParse(localStorage.getItem(STORAGE.workflowDecisionStats), {}),
+  workflowDecision: {
+    active: false,
+    roleId: null,
+    step: 0,
+    risk: 35,
+    xp: 0,
+    answered: null,
+    complete: false,
+    awarded: false
+  },
   roleFilters: {
     q: "",
     company: "all",
@@ -93,6 +115,10 @@ if (!["en", "zh", "fr"].includes(state.lang)) state.lang = "en";
 if (!Array.isArray(state.saved.roles)) state.saved.roles = [];
 if (!Array.isArray(state.saved.resources)) state.saved.resources = [];
 if (!Array.isArray(state.history)) state.history = [];
+if (!state.workflowDrafts || typeof state.workflowDrafts !== "object") state.workflowDrafts = {};
+if (!state.workflowDecisionStats || typeof state.workflowDecisionStats !== "object") {
+  state.workflowDecisionStats = {};
+}
 
 function t(key, vars = {}) {
   const source = UI[state.lang] || UI.en;
@@ -158,9 +184,11 @@ function icon(name, className = "") {
     chevronDown: '<path d="m5 7.5 5 5 5-5"/>',
     refresh: '<path d="M16 7a6 6 0 1 0 .5 5.7M16 3.5V7h-3.5"/>',
     copy: '<rect x="6.5" y="6.5" width="9" height="10" rx="1"/><path d="M13.5 6.5v-2a1 1 0 0 0-1-1h-8a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h2"/>',
+    plus: '<path d="M10 4v12M4 10h12"/>',
     trash: '<path d="M4.5 6h11M8 6V4h4v2M6 6l.7 10h6.6L14 6M8.5 9v4M11.5 9v4"/>',
     shield: '<path d="M10 3 16 5.5v4.2c0 3.4-2.4 5.8-6 7.3-3.6-1.5-6-3.9-6-7.3V5.5z"/><path d="m7.3 10 1.7 1.7 3.7-4"/>',
-    timer: '<circle cx="10" cy="11" r="6"/><path d="M10 7.8V11l2 1.4M8 2.8h4M10 2.8V5"/>'
+    timer: '<circle cx="10" cy="11" r="6"/><path d="M10 7.8V11l2 1.4M8 2.8h4M10 2.8V5"/>',
+    workflow: '<circle cx="5" cy="5" r="1.7"/><circle cx="15" cy="5" r="1.7"/><circle cx="10" cy="15" r="1.7"/><path d="M6.7 5h6.6M6.1 6.2l3 7.2M13.9 6.2l-3 7.2"/>'
   };
   return `<svg class="${className}" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name] || icons.info}</svg>`;
 }
@@ -224,6 +252,7 @@ function updateDocumentTitle() {
     roles: `${t("nav.roles")} — ${brand}`,
     company: `${getCompany(state.route.id)?.name || t("nav.roles")} — ${brand}`,
     intelligence: `${t("nav.intelligence")} — ${brand}`,
+    workflow: `${t("nav.workflow")} — ${brand}`,
     simulate: `${t("nav.simulate")} — ${brand}`
   };
   document.title = titles[state.route.name] || brand;
@@ -400,7 +429,8 @@ function densityBars(score, color = "#c8f56a") {
   ).join("")}</span>`;
 }
 
-function render() {
+function render(preserveScroll = false, targetScrollY = null) {
+  const scrollPosition = targetScrollY ?? window.scrollY;
   stopTimer();
   if (state.modalOpen) closeModal(false);
   document.body.dataset.route = state.route.name;
@@ -420,6 +450,10 @@ function render() {
     case "intelligence":
       renderIntelligencePage();
       break;
+    case "workflow":
+      if (state.workflowWalk) renderWorkflowWalkthrough();
+      else renderWorkflowPage();
+      break;
     case "simulate":
       if (state.session) renderSession();
       else if (state.lastResult) renderResults();
@@ -430,7 +464,7 @@ function render() {
   }
 
   syncSavedButtons();
-  window.scrollTo({ top: 0, behavior: "auto" });
+  window.scrollTo({ top: preserveScroll ? scrollPosition : 0, behavior: "auto" });
   if (state.session && state.route.name === "simulate" && !state.session.paused) {
     startTimer();
   }
@@ -610,6 +644,22 @@ function renderHomePage() {
           <div class="instrument-footer">
             <span class="mono">${t("home.instrumentSimMeta")}</span>
             <span class="text-link">${t("home.instrumentSimCta")} ${icon("arrow")}</span>
+          </div>
+        </a>
+        <a class="instrument-card" href="#/workflow" style="--instrument-color:#ff8a65">
+          <div class="instrument-top">
+            <span class="instrument-index">04 / FLOW</span>
+            <span class="instrument-icon">${icon("workflow")}</span>
+          </div>
+          <h3>${t("home.instrumentWorkflowTitle")}</h3>
+          <p>${t("home.instrumentWorkflowDesc")}</p>
+          <div class="instrument-list">
+            <span class="tag tag-coral">${t("home.tagBuild")}</span>
+            <span class="tag">${t("workflow.stages", { n: 5 })}</span>
+          </div>
+          <div class="instrument-footer">
+            <span class="mono">${t("home.instrumentWorkflowMeta")}</span>
+            <span class="text-link">${t("home.instrumentWorkflowCta")} ${icon("arrow")}</span>
           </div>
         </a>
       </div>
@@ -1063,6 +1113,654 @@ function refreshIntelligenceResults() {
     button.classList.toggle("is-active", button.dataset.intelCategory === state.intelCategory);
   });
   syncSavedButtons();
+}
+
+function selectedWorkflowRole() {
+  return getRole(state.workflowRoleId) || ROLES[0];
+}
+
+function workflowDraftKey(role) {
+  return `${role.id}:${state.lang}`;
+}
+
+function isWorkflowCustom(role) {
+  const draft = state.workflowDrafts[workflowDraftKey(role)];
+  return Array.isArray(draft) && draft.length > 0;
+}
+
+function buildWorkflowSteps(role) {
+  const key = workflowDraftKey(role);
+  if (isWorkflowCustom(role)) {
+    return state.workflowDrafts[key].map((stage) => ({
+      ...stage,
+      tools: Array.isArray(stage.tools) ? [...stage.tools] : []
+    }));
+  }
+  return getWorkflowTrack(role.track).stages.map((stage) => ({
+    id: stage.id,
+    title: tr(stage.title),
+    action: tr(stage.action),
+    output: tr(stage.output),
+    minutes: stage.minutes,
+    tools: [...stage.tools]
+  }));
+}
+
+function saveWorkflowDraft(role, steps) {
+  state.workflowDrafts[workflowDraftKey(role)] = steps;
+  localStorage.setItem(STORAGE.workflowDrafts, JSON.stringify(state.workflowDrafts));
+}
+
+function resetWorkflowDraft(role) {
+  delete state.workflowDrafts[workflowDraftKey(role)];
+  localStorage.setItem(STORAGE.workflowDrafts, JSON.stringify(state.workflowDrafts));
+}
+
+function workflowMinutes(steps) {
+  return steps.reduce((total, step) => total + (Number(step.minutes) || 0), 0);
+}
+
+function decisionStatsFor(role) {
+  return state.workflowDecisionStats[role.id] || { bestXp: 0, bestRisk: 100, runs: 0 };
+}
+
+function totalDecisionXp() {
+  return Object.values(state.workflowDecisionStats).reduce(
+    (total, stats) => total + (Number(stats.bestXp) || 0),
+    0
+  );
+}
+
+function resetWorkflowDecision(role) {
+  state.workflowDecision = {
+    active: false,
+    roleId: role?.id || null,
+    step: 0,
+    risk: 35,
+    xp: 0,
+    answered: null,
+    complete: false,
+    awarded: false
+  };
+}
+
+function decisionGradeKey(risk, xp) {
+  if (risk <= 20 && xp >= 70) return "decisionGradeCalibrated";
+  if (risk <= 45) return "decisionGradeDeveloping";
+  return "decisionGradeHighRisk";
+}
+
+function awardDecisionResult(role) {
+  const decision = state.workflowDecision;
+  if (decision.complete && !decision.awarded) {
+    const current = decisionStatsFor(role);
+    state.workflowDecisionStats[role.id] = {
+      bestXp: Math.max(current.bestXp || 0, decision.xp),
+      bestRisk:
+        current.bestRisk === 100 || !Number.isFinite(current.bestRisk)
+          ? decision.risk
+          : Math.min(current.bestRisk, decision.risk),
+      runs: (current.runs || 0) + 1,
+      lastRun: new Date().toISOString()
+    };
+    localStorage.setItem(
+      STORAGE.workflowDecisionStats,
+      JSON.stringify(state.workflowDecisionStats)
+    );
+    decision.awarded = true;
+  }
+}
+
+function workflowDecisionMarkup(role, steps) {
+  const decision = state.workflowDecision;
+  const stats = decisionStatsFor(role);
+  const active = decision.active && decision.roleId === role.id;
+  const node = DECISION_NODES[decision.step];
+  const answeredOption = decision.answered
+    ? node.options.find((option) => option.id === decision.answered)
+    : null;
+  const riskClass = decision.risk >= 60 ? "is-high" : decision.risk >= 40 ? "is-mid" : "is-low";
+
+  if (!active) {
+    return `
+      <section class="workflow-decision" id="workflow-decision">
+        <div class="workflow-decision-head">
+          <div>
+            <div class="workflow-card-kicker">${t("workflow.decisionKicker")}</div>
+            <h2>${t("workflow.decisionTitle")}</h2>
+            <p>${t("workflow.decisionIntro")}</p>
+          </div>
+          <div class="workflow-decision-stats">
+            <div><span>${t("workflow.decisionTotal")}</span><strong>${totalDecisionXp()} XP</strong></div>
+            <div><span>${t("workflow.decisionBest")}</span><strong>${stats.bestXp} XP</strong></div>
+            <div><span>${t("workflow.decisionRuns")}</span><strong>${stats.runs}</strong></div>
+          </div>
+        </div>
+        <div class="workflow-decision-launch">
+          <div class="decision-launch-copy">
+            <span class="tag tag-coral">${t("workflow.decisionKicker")}</span>
+            <h3>${escapeHtml(tr(getWorkflowTrack(role.track).scenario.title))}</h3>
+            <p>${escapeHtml(tr(getWorkflowTrack(role.track).scenario.brief))}</p>
+            <div class="decision-launch-meta">
+              <span>${t("workflow.decisionsCount", { n: DECISION_NODES.length })}</span>
+              <span>${t("workflow.riskStarts", { n: 35 })}</span>
+              <span>${t("workflow.decisionProfile")}</span>
+            </div>
+          </div>
+          <button class="btn btn-primary" type="button" data-decision-start>
+            ${icon("play")} ${t("workflow.decisionStart")}
+          </button>
+        </div>
+        <p class="workflow-decision-note">${t("workflow.decisionNote")}</p>
+      </section>`;
+  }
+
+  if (decision.complete) {
+    awardDecisionResult(role);
+    const updated = decisionStatsFor(role);
+    return `
+      <section class="workflow-decision is-active" id="workflow-decision">
+        <div class="workflow-decision-head">
+          <div>
+            <div class="workflow-card-kicker">${t("workflow.decisionKicker")}</div>
+            <h2>${escapeHtml(tr(getWorkflowTrack(role.track).scenario.title))}</h2>
+          </div>
+          <span class="tag tag-acid">${t("workflow.decisionComplete")}</span>
+        </div>
+        <div class="decision-result">
+          <div class="decision-result-score">
+            <span>${t("workflow.decisionXp")}</span>
+            <strong>${decision.xp}<small> XP</small></strong>
+            <em>${t(`workflow.${decisionGradeKey(decision.risk, decision.xp)}`)}</em>
+          </div>
+          <div class="decision-result-bars">
+            <div>
+              <span>${t("workflow.decisionRisk")}</span>
+              <strong>${decision.risk}/100</strong>
+              <div class="decision-risk-track"><span class="${riskClass}" style="--w:${decision.risk}%"></span></div>
+            </div>
+            <div class="decision-result-facts">
+              <p><span>${t("workflow.decisionBest")}</span>${updated.bestXp} XP</p>
+              <p><span>${t("workflow.decisionTotal")}</span>${totalDecisionXp()} XP</p>
+              <p><span>${t("workflow.decisionRuns")}</span>${updated.runs}</p>
+            </div>
+          </div>
+        </div>
+        <div class="workflow-decision-actions">
+          <button class="btn btn-primary btn-small" type="button" data-decision-retry>${icon("refresh")} ${t("workflow.decisionRetry")}</button>
+          <button class="btn btn-ghost btn-small" type="button" data-decision-exit>${icon("arrow", "flip")} ${t("workflow.decisionBack")}</button>
+        </div>
+        <p class="workflow-decision-note">${t("workflow.decisionNote")}</p>
+      </section>`;
+  }
+
+  return `
+    <section class="workflow-decision is-active" id="workflow-decision">
+      <div class="workflow-decision-head">
+        <div>
+          <div class="workflow-card-kicker">${t("workflow.decisionKicker")}</div>
+          <h2>${escapeHtml(tr(getWorkflowTrack(role.track).scenario.title))}</h2>
+          <p>${escapeHtml(tr(getWorkflowTrack(role.track).scenario.brief))}</p>
+        </div>
+        <div class="decision-meters">
+          <div class="decision-meter">
+            <span>${t("workflow.decisionRisk")}</span>
+            <strong>${decision.risk}/100</strong>
+            <div class="decision-risk-track"><span class="${riskClass}" style="--w:${decision.risk}%"></span></div>
+          </div>
+          <div class="decision-xp"><span>${t("workflow.decisionXp")}</span><strong>${decision.xp} XP</strong></div>
+        </div>
+      </div>
+      <div class="decision-progress">
+        ${DECISION_NODES.map(
+          (item, index) =>
+            `<span class="${index < decision.step ? "is-done" : ""} ${index === decision.step ? "is-active" : ""}"></span>`
+        ).join("")}
+      </div>
+      <div class="decision-body">
+        <div class="decision-index">${String(decision.step + 1).padStart(2, "0")}</div>
+        <div class="decision-main">
+          <div class="workflow-card-kicker">${t("workflow.decisionOf", {
+            n: decision.step + 1,
+            total: DECISION_NODES.length
+          })} · ${escapeHtml(steps[node.stageIndex]?.title || steps[decision.step]?.title || "")}</div>
+          <h3>${escapeHtml(tr(node.prompt))}</h3>
+          ${
+            answeredOption
+              ? `
+                <div class="decision-outcome">
+                  <span>${t("workflow.decisionOutcome")}</span>
+                  <p>${escapeHtml(tr(answeredOption.outcome))}</p>
+                  <div class="decision-outcome-meta">
+                    <span class="${answeredOption.riskDelta > 0 ? "is-risk" : "is-good"}">
+                      ${t("workflow.decisionRiskChange", {
+                        n: `${answeredOption.riskDelta > 0 ? "+" : ""}${answeredOption.riskDelta}`
+                      })}
+                    </span>
+                    <span class="is-good">${t("workflow.decisionXpGain", { n: answeredOption.xp })}</span>
+                  </div>
+                  <div class="decision-lesson"><strong>${t("workflow.decisionLesson")}</strong>${escapeHtml(
+                    tr(answeredOption.lesson)
+                  )}</div>
+                </div>
+              `
+              : `
+                <div class="decision-options">
+                  ${node.options
+                    .map(
+                      (option, index) => `
+                        <button class="decision-option" type="button" data-decision-option="${option.id}">
+                          <span>${String.fromCharCode(65 + index)}</span>
+                          <strong>${escapeHtml(tr(option.label))}</strong>
+                        </button>`
+                    )
+                    .join("")}
+                </div>
+              `
+          }
+          <div class="decision-nav">
+            <span>${t("workflow.decisionNote")}</span>
+            ${
+              answeredOption
+                ? `<button class="btn btn-primary btn-small" type="button" data-decision-next>
+                    ${decision.step === DECISION_NODES.length - 1 ? t("workflow.decisionResult") : t("workflow.decisionContinue")}
+                    ${icon("arrow")}
+                  </button>`
+                : ""
+            }
+          </div>
+        </div>
+      </div>
+    </section>`;
+}
+
+function workflowRolePickerMarkup(selectedRole) {
+  const selectedCompany = getCompany(selectedRole.companyId);
+  return `
+    <div class="workflow-role-picker" id="workflow-role-picker">
+      <button class="workflow-picker-trigger" type="button" data-workflow-picker-toggle
+        aria-haspopup="listbox" aria-expanded="false">
+        ${companySigil(selectedCompany)}
+        <span class="workflow-picker-trigger-copy">
+          <span>${escapeHtml(selectedCompany.name)} · ${escapeHtml(selectedRole.level)}</span>
+          <strong>${escapeHtml(tr(selectedRole.title))}</strong>
+        </span>
+        <span class="workflow-picker-chevron">${icon("chevronDown")}</span>
+      </button>
+      <div class="workflow-picker-panel" id="workflow-role-panel" hidden>
+        <div class="workflow-picker-search">
+          ${icon("search")}
+          <input id="workflow-role-search" type="search" autocomplete="off"
+            placeholder="${t("workflow.searchRolePlaceholder")}"
+            aria-label="${t("workflow.searchRolePlaceholder")}">
+        </div>
+        <div class="workflow-picker-list" id="workflow-role-list" role="listbox">
+          ${COMPANIES.map((company) => {
+            const roles = getRolesForCompany(company.id);
+            if (!roles.length) return "";
+            return `
+              <div class="workflow-picker-group" data-workflow-picker-group>
+                <div class="workflow-picker-group-label">
+                  <span>${escapeHtml(company.name)}</span>
+                  <em>${roles.length}</em>
+                </div>
+                ${roles
+                  .map((role) => {
+                    const search = normalizeText(
+                      `${tr(role.title)} ${company.name} ${role.level} ${role.location} ${trackLabel(role)}`
+                    );
+                    return `
+                      <button class="workflow-picker-option ${selectedRole.id === role.id ? "is-selected" : ""}"
+                        type="button" role="option" aria-selected="${selectedRole.id === role.id}"
+                        data-workflow-role-option="${role.id}" data-search="${escapeHtml(search)}">
+                        <span>
+                          <strong>${escapeHtml(tr(role.title))}</strong>
+                          <em>${escapeHtml(role.level)} · ${escapeHtml(role.location)} · ${escapeHtml(trackLabel(role))}</em>
+                        </span>
+                        ${selectedRole.id === role.id ? icon("check") : ""}
+                      </button>`;
+                  })
+                  .join("")}
+              </div>`;
+          }).join("")}
+          <div class="workflow-picker-empty" id="workflow-role-empty" hidden>${t("workflow.noRoleResults")}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function openWorkflowPicker() {
+  const panel = document.getElementById("workflow-role-panel");
+  const trigger = document.querySelector("[data-workflow-picker-toggle]");
+  const search = document.getElementById("workflow-role-search");
+  if (!panel || !trigger) return;
+  panel.hidden = false;
+  trigger.setAttribute("aria-expanded", "true");
+  if (search) {
+    search.value = "";
+    filterWorkflowRoleOptions("");
+    window.setTimeout(() => search.focus(), 20);
+  }
+}
+
+function closeWorkflowPicker(restoreFocus = false) {
+  const panel = document.getElementById("workflow-role-panel");
+  const trigger = document.querySelector("[data-workflow-picker-toggle]");
+  if (!panel || !trigger) return;
+  panel.hidden = true;
+  trigger.setAttribute("aria-expanded", "false");
+  if (restoreFocus) trigger.focus();
+}
+
+function filterWorkflowRoleOptions(query) {
+  const normalized = normalizeText(query.trim());
+  const groups = document.querySelectorAll("[data-workflow-picker-group]");
+  let visible = 0;
+  groups.forEach((group) => {
+    let groupVisible = 0;
+    group.querySelectorAll("[data-workflow-role-option]").forEach((option) => {
+      const match = !normalized || option.dataset.search.includes(normalized);
+      option.hidden = !match;
+      if (match) {
+        visible += 1;
+        groupVisible += 1;
+      }
+    });
+    group.hidden = groupVisible === 0;
+  });
+  const empty = document.getElementById("workflow-role-empty");
+  if (empty) empty.hidden = visible > 0;
+}
+
+function renderWorkflowPage() {
+  const role = selectedWorkflowRole();
+  const company = getCompany(role.companyId);
+  const track = getWorkflowTrack(role.track);
+  const steps = buildWorkflowSteps(role);
+  const maxStep = Math.max(0, steps.length - 1);
+  state.workflowStep = clamp(state.workflowStep, 0, maxStep);
+  const current = steps[state.workflowStep];
+  const scenario = track.scenario;
+  const custom = isWorkflowCustom(role);
+  const totalMinutes = workflowMinutes(steps);
+  const previousOutput =
+    state.workflowStep === 0 ? tr(scenario.brief) : steps[state.workflowStep - 1].output;
+
+  app.innerHTML = `
+    <div class="page workflow-page">
+      <div class="container">
+        <div class="page-head">
+          <div>
+            <div class="eyebrow"><span class="eyebrow-index">04</span>${t("workflow.eyebrow")}</div>
+            <h1>${t("workflow.titleA")}<br><em>${t("workflow.titleB")}</em></h1>
+          </div>
+          <div class="page-head-side">
+            <p>${t("workflow.side")}</p>
+            <div class="page-head-note">${icon("info")} ${t("workflow.note")}</div>
+          </div>
+        </div>
+
+        <div class="workflow-toolbar">
+          <div class="workflow-role-field">
+            <span>${t("workflow.roleLabel")}</span>
+            ${workflowRolePickerMarkup(role)}
+          </div>
+          <div class="workflow-template-meta">
+            <span class="tag tag-acid">${escapeHtml(tr(track.label))}</span>
+            <span class="tag">${t("workflow.stages", { n: steps.length })}</span>
+            <span class="tag">${t("workflow.totalTime", { n: totalMinutes })}</span>
+            ${custom ? `<span class="tag tag-coral">${t("workflow.custom")}</span>` : ""}
+          </div>
+          <div class="workflow-actions">
+            <button class="btn btn-primary btn-small" type="button" data-workflow-walk>
+              ${icon("play")} ${t("workflow.start")}
+            </button>
+            <button class="btn btn-ghost btn-small" type="button" data-workflow-edit>
+              ${icon(custom ? "check" : "layers")} ${state.workflowEdit ? t("workflow.doneEditing") : t("workflow.edit")}
+            </button>
+            ${
+              custom
+                ? `<button class="btn btn-ghost btn-small" type="button" data-workflow-reset>${icon("refresh")} ${t("workflow.reset")}</button>`
+                : ""
+            }
+          </div>
+        </div>
+
+        <div class="workflow-context">
+          <div class="workflow-role-lockup">
+            ${companySigil(company)}
+            <div>
+              <strong>${escapeHtml(tr(role.title))}</strong>
+              <span>${escapeHtml(company.name)} · ${escapeHtml(role.location)} · ${escapeHtml(role.level)}</span>
+            </div>
+          </div>
+          <span class="workflow-context-rule"></span>
+          <p>${escapeHtml(tr(track.summary))}</p>
+        </div>
+
+        <div class="workflow-stage-rail" role="tablist" aria-label="${t("workflow.template")}">
+          ${steps
+            .map(
+              (step, index) => `
+                <button class="workflow-stage-tab ${index === state.workflowStep ? "is-active" : ""} ${
+                  index < state.workflowStep ? "is-done" : ""
+                }" type="button" data-workflow-step="${index}" role="tab" aria-selected="${index === state.workflowStep}">
+                  <span class="workflow-stage-number">${String(index + 1).padStart(2, "0")}</span>
+                  <span class="workflow-stage-name">${escapeHtml(step.title)}</span>
+                  <span class="workflow-stage-time">${step.minutes} min</span>
+                </button>`
+            )
+            .join("")}
+        </div>
+
+        <div class="workflow-grid">
+          ${
+            state.workflowEdit
+              ? `
+                <section class="workflow-editor-card">
+                  <div class="workflow-card-kicker">${t("workflow.editorNote")}</div>
+                  <form id="workflow-edit-form">
+                    <div class="workflow-edit-grid">
+                      <label class="workflow-edit-field">
+                        <span>${t("workflow.stageTitle")}</span>
+                        <input name="title" class="text-input" value="${escapeHtml(current.title)}">
+                      </label>
+                      <label class="workflow-edit-field">
+                        <span>${t("workflow.minutes")}</span>
+                        <input name="minutes" class="text-input" type="number" min="1" max="480" value="${current.minutes}">
+                      </label>
+                    </div>
+                    <label class="workflow-edit-field">
+                      <span>${t("workflow.whatHappens")}</span>
+                      <textarea name="action" class="textarea-input" rows="5">${escapeHtml(current.action)}</textarea>
+                    </label>
+                    <label class="workflow-edit-field">
+                      <span>${t("workflow.artifact")}</span>
+                      <textarea name="output" class="textarea-input" rows="4">${escapeHtml(current.output)}</textarea>
+                    </label>
+                    <label class="workflow-edit-field">
+                      <span>${t("workflow.tools")}</span>
+                      <input name="tools" class="text-input" value="${escapeHtml(current.tools.join(", "))}">
+                    </label>
+                    <div class="workflow-edit-actions">
+                      <button class="btn btn-primary btn-small" type="submit">${icon("check")} ${t("workflow.saveStage")}</button>
+                      <button class="btn btn-ghost btn-small" type="button" data-workflow-move="up" ${state.workflowStep === 0 ? "disabled" : ""}>↑ ${t("workflow.moveUp")}</button>
+                      <button class="btn btn-ghost btn-small" type="button" data-workflow-move="down" ${state.workflowStep === steps.length - 1 ? "disabled" : ""}>↓ ${t("workflow.moveDown")}</button>
+                      <button class="btn btn-ghost btn-small" type="button" data-workflow-delete ${steps.length === 1 ? "disabled" : ""}>${icon("trash")} ${t("workflow.deleteStage")}</button>
+                    </div>
+                  </form>
+                  <button class="workflow-add-stage" type="button" data-workflow-add>${icon("plus")} ${t("workflow.addStage")}</button>
+                </section>
+              `
+              : `
+                <section class="workflow-detail-card">
+                  <div class="workflow-detail-top">
+                    <div>
+                      <div class="workflow-card-kicker">${t("workflow.stageOf", { n: state.workflowStep + 1, total: steps.length })}</div>
+                      <h2>${escapeHtml(current.title)}</h2>
+                    </div>
+                    <span class="workflow-stage-stamp">${current.minutes} MIN</span>
+                  </div>
+                  <div class="workflow-detail-block">
+                    <span class="workflow-block-label">${t("workflow.input")}</span>
+                    <p>${escapeHtml(previousOutput)}</p>
+                  </div>
+                  <div class="workflow-detail-block">
+                    <span class="workflow-block-label">${t("workflow.action")}</span>
+                    <p>${escapeHtml(current.action)}</p>
+                  </div>
+                  <div class="workflow-detail-block accent">
+                    <span class="workflow-block-label">${t("workflow.output")}</span>
+                    <p>${escapeHtml(current.output)}</p>
+                  </div>
+                  <div class="workflow-detail-block done">
+                    <span class="workflow-block-label">${t("workflow.doneRuleLabel")}</span>
+                    <p>${t("workflow.doneRule")}</p>
+                  </div>
+                  <div class="workflow-detail-meta">
+                    <div><span>${t("workflow.collaborators")}</span><strong>${escapeHtml(tr(track.collaborators))}</strong></div>
+                    <div><span>${t("workflow.tools")}</span><strong>${current.tools.map((tool) => `<i>${escapeHtml(tool)}</i>`).join(" ")}</strong></div>
+                  </div>
+                  <div class="workflow-detail-nav">
+                    <button class="btn btn-ghost btn-small" type="button" data-workflow-prev ${state.workflowStep === 0 ? "disabled" : ""}>${icon("arrow", "flip")} ${t("workflow.previous")}</button>
+                    <button class="btn btn-ghost btn-small" type="button" data-workflow-next ${state.workflowStep === steps.length - 1 ? "disabled" : ""}>${t("workflow.next")} ${icon("arrow")}</button>
+                  </div>
+                </section>
+              `
+          }
+
+          <aside class="workflow-scenario-card">
+            <div class="workflow-card-kicker">${t("workflow.scenario")}</div>
+            <h3>${escapeHtml(tr(scenario.title))}</h3>
+            <p>${escapeHtml(tr(scenario.brief))}</p>
+            <dl>
+              <div><dt>${t("workflow.stakeholder")}</dt><dd>${escapeHtml(tr(scenario.stakeholder))}</dd></div>
+              <div><dt>${t("workflow.success")}</dt><dd>${escapeHtml(tr(scenario.success))}</dd></div>
+              <div><dt>${t("workflow.risk")}</dt><dd>${escapeHtml(tr(scenario.risk))}</dd></div>
+            </dl>
+            <button class="btn btn-primary btn-small workflow-scenario-run" type="button" data-workflow-walk>
+              ${icon("play")} ${t("workflow.start")}
+            </button>
+          </aside>
+        </div>
+        ${workflowDecisionMarkup(role, steps)}
+      </div>
+    </div>`;
+}
+
+function renderWorkflowWalkthrough() {
+  const role = selectedWorkflowRole();
+  const company = getCompany(role.companyId);
+  const track = getWorkflowTrack(role.track);
+  const steps = buildWorkflowSteps(role);
+  const maxStep = Math.max(0, steps.length - 1);
+  state.workflowWalkStep = clamp(state.workflowWalkStep, 0, maxStep);
+  const current = steps[state.workflowWalkStep];
+  const input = state.workflowWalkStep === 0 ? tr(track.scenario.brief) : steps[state.workflowWalkStep - 1].output;
+  const totalMinutes = workflowMinutes(steps);
+
+  if (state.workflowWalkDone) {
+    app.innerHTML = `
+      <div class="page workflow-walk-page">
+        <div class="container workflow-walk-shell">
+          <div class="workflow-walk-topbar">
+            <span class="workflow-walk-label">${t("workflow.demoKicker")} / ${escapeHtml(company.name)}</span>
+            <button class="btn btn-ghost btn-small" type="button" data-workflow-exit>${icon("close")} ${t("workflow.demoExit")}</button>
+          </div>
+          <section class="workflow-complete-card">
+            <div class="workflow-complete-mark">${icon("check")}</div>
+            <div class="workflow-card-kicker">${t("workflow.demoKicker")}</div>
+            <h1>${t("workflow.demoComplete")}</h1>
+            <p>${escapeHtml(tr(role.title))} · ${escapeHtml(company.name)}</p>
+            <div class="workflow-complete-stats">
+              <div><strong>${steps.length}</strong><span>${t("workflow.stages", { n: "" }).trim()}</span></div>
+              <div><strong>${totalMinutes}</strong><span>min</span></div>
+              <div><strong>${steps.length}</strong><span>${t("workflow.handoffs")}</span></div>
+            </div>
+            <ul class="workflow-artifact-list">
+              ${steps
+                .map(
+                  (step, index) => `
+                    <li><span>${String(index + 1).padStart(2, "0")}</span><div><strong>${escapeHtml(step.title)}</strong><p>${escapeHtml(step.output)}</p></div></li>`
+                )
+                .join("")}
+            </ul>
+            <div class="workflow-complete-actions">
+              <button class="btn btn-primary btn-small" type="button" data-workflow-replay>${icon("refresh")} ${t("workflow.replay")}</button>
+              <button class="btn btn-ghost btn-small" type="button" data-workflow-back>${icon("arrow", "flip")} ${t("workflow.backToBuilder")}</button>
+            </div>
+            <p class="workflow-complete-note">${t("workflow.completeNote")}</p>
+          </section>
+        </div>
+      </div>`;
+    return;
+  }
+
+  app.innerHTML = `
+    <div class="page workflow-walk-page">
+      <div class="container workflow-walk-shell">
+        <div class="workflow-walk-topbar">
+          <span class="workflow-walk-label">${t("workflow.demoKicker")} / ${escapeHtml(company.name)}</span>
+          <button class="btn btn-ghost btn-small" type="button" data-workflow-exit>${icon("close")} ${t("workflow.demoExit")}</button>
+        </div>
+        <div class="workflow-walk-progress" aria-hidden="true">
+          ${steps
+            .map(
+              (step, index) => `
+                <span class="${index < state.workflowWalkStep ? "is-done" : ""} ${
+                  index === state.workflowWalkStep ? "is-active" : ""
+                }"></span>`
+            )
+            .join("")}
+        </div>
+        <section class="workflow-walk-stage">
+          <div class="workflow-walk-side">
+            <span class="workflow-stage-number">${String(state.workflowWalkStep + 1).padStart(2, "0")}</span>
+            <span class="workflow-stage-stamp">${current.minutes} MIN</span>
+            <div class="workflow-scenario-mini">
+              <span>${t("workflow.scenario")}</span>
+              <strong>${escapeHtml(tr(track.scenario.title))}</strong>
+            </div>
+          </div>
+          <div class="workflow-walk-main">
+            <div class="workflow-card-kicker">${t("workflow.stageOf", {
+              n: state.workflowWalkStep + 1,
+              total: steps.length
+            })}</div>
+            <h1>${escapeHtml(current.title)}</h1>
+            <p class="workflow-walk-role">${escapeHtml(tr(role.title))} · ${escapeHtml(company.name)}</p>
+            <div class="workflow-walk-columns">
+              <article>
+                <span>${t("workflow.input")}</span>
+                <p>${escapeHtml(input)}</p>
+              </article>
+              <article class="is-action">
+                <span>${t("workflow.action")}</span>
+                <p>${escapeHtml(current.action)}</p>
+              </article>
+              <article class="is-output">
+                <span>${t("workflow.output")}</span>
+                <p>${escapeHtml(current.output)}</p>
+              </article>
+            </div>
+            <div class="workflow-walk-bottom">
+              <div><span>${t("workflow.collaborators")}</span><strong>${escapeHtml(tr(track.collaborators))}</strong></div>
+              <div><span>${t("workflow.tools")}</span><strong>${current.tools.map((tool) => escapeHtml(tool)).join(" · ")}</strong></div>
+            </div>
+            <div class="workflow-walk-actions">
+              <button class="btn btn-ghost btn-small" type="button" data-workflow-walk-prev ${state.workflowWalkStep === 0 ? "disabled" : ""}>${icon("arrow", "flip")} ${t("workflow.previous")}</button>
+              <button class="btn btn-primary btn-small" type="button" data-workflow-walk-next>
+                ${state.workflowWalkStep === maxStep ? t("workflow.finish") : t("workflow.next")} ${icon("arrow")}
+              </button>
+            </div>
+          </div>
+        </section>
+        <div class="workflow-walk-guardrails">
+          <div><span>${t("workflow.success")}</span><p>${escapeHtml(tr(track.scenario.success))}</p></div>
+          <div><span>${t("workflow.risk")}</span><p>${escapeHtml(tr(track.scenario.risk))}</p></div>
+        </div>
+      </div>
+    </div>`;
 }
 
 function durationForLength(length) {
@@ -1918,6 +2616,9 @@ function openRoleModal(roleId) {
         <button class="btn btn-ghost btn-small" type="button" data-sim-from-role="${role.track}" data-sim-company-id="${company.id}">
           ${icon("play")} ${t("home.ctaSimulate")}
         </button>
+        <button class="btn btn-ghost btn-small" type="button" data-workflow-from-role="${role.id}">
+          ${icon("workflow")} ${t("workflow.viewForRole")}
+        </button>
       </div>
       <p class="comp-note" style="margin-top:14px">${t("apply.note", { company: company.name })}</p>
     `,
@@ -2340,6 +3041,8 @@ document.addEventListener("click", (event) => {
   const target = event.target;
   const languageSwitcher = document.getElementById("language-switcher");
   if (languageSwitcher && !target.closest("#language-switcher")) closeLanguageMenu();
+  const workflowPicker = document.getElementById("workflow-role-picker");
+  if (workflowPicker && !target.closest("#workflow-role-picker")) closeWorkflowPicker();
 
   const backdrop = target.closest("[data-modal-backdrop]");
   if (backdrop && target === backdrop) {
@@ -2381,6 +3084,26 @@ document.addEventListener("click", (event) => {
 
   if (target.closest("[data-route-link]")) closeMobileNav();
 
+  if (target.closest("[data-workflow-picker-toggle]")) {
+    const panel = document.getElementById("workflow-role-panel");
+    if (panel?.hidden) openWorkflowPicker();
+    else closeWorkflowPicker();
+    return;
+  }
+
+  const workflowRoleOption = target.closest("[data-workflow-role-option]");
+  if (workflowRoleOption) {
+    state.workflowRoleId = workflowRoleOption.dataset.workflowRoleOption;
+    localStorage.setItem(STORAGE.workflowRole, state.workflowRoleId);
+    state.workflowStep = 0;
+    state.workflowEdit = false;
+    state.workflowWalk = false;
+    state.workflowWalkDone = false;
+    resetWorkflowDecision(getRole(state.workflowRoleId));
+    render(true);
+    return;
+  }
+
   if (target.closest("[data-install-app]")) {
     event.preventDefault();
     closeMobileNav();
@@ -2413,6 +3136,206 @@ document.addEventListener("click", (event) => {
   const modalButton = target.closest("[data-open-modal]");
   if (modalButton) {
     openInfoModal(modalButton.dataset.openModal);
+    return;
+  }
+
+  const workflowStepButton = target.closest("[data-workflow-step]");
+  if (workflowStepButton) {
+    state.workflowStep = Number(workflowStepButton.dataset.workflowStep);
+    state.workflowEdit = false;
+    render(true);
+    return;
+  }
+
+  if (target.closest("[data-workflow-edit]")) {
+    state.workflowEdit = !state.workflowEdit;
+    render(true);
+    return;
+  }
+
+  if (target.closest("[data-workflow-walk]")) {
+    state.workflowWalk = true;
+    state.workflowWalkStep = 0;
+    state.workflowWalkDone = false;
+    render();
+    window.scrollTo({ top: 0, behavior: "auto" });
+    return;
+  }
+
+  if (target.closest("[data-decision-start]")) {
+    const role = selectedWorkflowRole();
+    state.workflowDecision = {
+      active: true,
+      roleId: role.id,
+      step: 0,
+      risk: 35,
+      xp: 0,
+      answered: null,
+      complete: false,
+      awarded: false
+    };
+    render(true);
+    window.setTimeout(() => {
+      document.getElementById("workflow-decision")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }, 40);
+    return;
+  }
+
+  const decisionOptionButton = target.closest("[data-decision-option]");
+  if (decisionOptionButton && state.workflowDecision.active) {
+    if (state.workflowDecision.answered) return;
+    const node = DECISION_NODES[state.workflowDecision.step];
+    const option = node?.options.find(
+      (item) => item.id === decisionOptionButton.dataset.decisionOption
+    );
+    if (option) {
+      state.workflowDecision.answered = option.id;
+      state.workflowDecision.risk = clamp(
+        state.workflowDecision.risk + option.riskDelta,
+        0,
+        100
+      );
+      state.workflowDecision.xp += option.xp;
+      render(true);
+    }
+    return;
+  }
+
+  if (target.closest("[data-decision-next]")) {
+    if (state.workflowDecision.step >= DECISION_NODES.length - 1) {
+      state.workflowDecision.complete = true;
+    } else {
+      state.workflowDecision.step += 1;
+      state.workflowDecision.answered = null;
+    }
+    render(true);
+    return;
+  }
+
+  if (target.closest("[data-decision-retry]")) {
+    const role = selectedWorkflowRole();
+    state.workflowDecision = {
+      active: true,
+      roleId: role.id,
+      step: 0,
+      risk: 35,
+      xp: 0,
+      answered: null,
+      complete: false,
+      awarded: false
+    };
+    render(true);
+    return;
+  }
+
+  if (target.closest("[data-decision-exit]")) {
+    state.workflowDecision.active = false;
+    render(true);
+    return;
+  }
+
+  if (target.closest("[data-workflow-prev]")) {
+    state.workflowStep = Math.max(0, state.workflowStep - 1);
+    render(true);
+    return;
+  }
+
+  if (target.closest("[data-workflow-next]")) {
+    const steps = buildWorkflowSteps(selectedWorkflowRole());
+    state.workflowStep = Math.min(steps.length - 1, state.workflowStep + 1);
+    render(true);
+    return;
+  }
+
+  if (target.closest("[data-workflow-reset]")) {
+    if (!window.confirm(t("workflow.resetConfirm"))) return;
+    resetWorkflowDraft(selectedWorkflowRole());
+    state.workflowStep = 0;
+    toast(t("workflow.resetDone"));
+    render(true);
+    return;
+  }
+
+  const moveWorkflow = target.closest("[data-workflow-move]");
+  if (moveWorkflow) {
+    const role = selectedWorkflowRole();
+    const steps = buildWorkflowSteps(role);
+    const index = state.workflowStep;
+    const targetIndex = moveWorkflow.dataset.workflowMove === "up" ? index - 1 : index + 1;
+    if (targetIndex >= 0 && targetIndex < steps.length) {
+      [steps[index], steps[targetIndex]] = [steps[targetIndex], steps[index]];
+      saveWorkflowDraft(role, steps);
+      state.workflowStep = targetIndex;
+      render(true);
+    }
+    return;
+  }
+
+  if (target.closest("[data-workflow-delete]")) {
+    const role = selectedWorkflowRole();
+    const steps = buildWorkflowSteps(role);
+    if (steps.length > 1) {
+      steps.splice(state.workflowStep, 1);
+      saveWorkflowDraft(role, steps);
+      state.workflowStep = Math.max(0, state.workflowStep - 1);
+      toast(t("workflow.saved"));
+      render(true);
+    }
+    return;
+  }
+
+  if (target.closest("[data-workflow-add]")) {
+    const role = selectedWorkflowRole();
+    const steps = buildWorkflowSteps(role);
+    steps.push({
+      id: `custom-${Date.now()}`,
+      title: t("workflow.newStageTitle"),
+      action: t("workflow.newStageAction"),
+      output: t("workflow.newStageOutput"),
+      minutes: 30,
+      tools: []
+    });
+    saveWorkflowDraft(role, steps);
+    state.workflowStep = steps.length - 1;
+    state.workflowEdit = true;
+    toast(t("workflow.saved"));
+    render(true);
+    return;
+  }
+
+  if (target.closest("[data-workflow-walk-prev]")) {
+    state.workflowWalkStep = Math.max(0, state.workflowWalkStep - 1);
+    render();
+    return;
+  }
+
+  if (target.closest("[data-workflow-walk-next]")) {
+    const steps = buildWorkflowSteps(selectedWorkflowRole());
+    if (state.workflowWalkStep >= steps.length - 1) {
+      state.workflowWalkDone = true;
+    } else {
+      state.workflowWalkStep += 1;
+    }
+    render();
+    window.scrollTo({ top: 0, behavior: "auto" });
+    return;
+  }
+
+  if (target.closest("[data-workflow-exit]") || target.closest("[data-workflow-back]")) {
+    state.workflowWalk = false;
+    state.workflowWalkDone = false;
+    resetWorkflowDecision(getRole(target.value));
+    render(true);
+    return;
+  }
+
+  if (target.closest("[data-workflow-replay]")) {
+    state.workflowWalkStep = 0;
+    state.workflowWalkDone = false;
+    render();
     return;
   }
 
@@ -2552,6 +3475,20 @@ document.addEventListener("click", (event) => {
     return;
   }
 
+  const workflowFromRole = target.closest("[data-workflow-from-role]");
+  if (workflowFromRole) {
+    state.workflowRoleId = workflowFromRole.dataset.workflowFromRole;
+    localStorage.setItem(STORAGE.workflowRole, state.workflowRoleId);
+    state.workflowStep = 0;
+    state.workflowEdit = false;
+    state.workflowWalk = false;
+    state.workflowWalkDone = false;
+    resetWorkflowDecision(getRole(state.workflowRoleId));
+    closeModal();
+    navigate("/workflow");
+    return;
+  }
+
   if (target.closest("[data-clear-saved]")) {
     if (!window.confirm(t("info.clearConfirm"))) return;
     state.saved = { roles: [], resources: [] };
@@ -2577,7 +3514,37 @@ document.addEventListener("change", (event) => {
   }
   if (target.matches("[data-sim-company]")) {
     state.simSetup.company = target.value;
+    return;
   }
+});
+
+document.addEventListener("submit", (event) => {
+  if (event.target.id !== "workflow-edit-form") return;
+  event.preventDefault();
+  const role = selectedWorkflowRole();
+  const steps = buildWorkflowSteps(role);
+  const current = steps[state.workflowStep];
+  if (!current) return;
+  const data = new FormData(event.target);
+  const title = String(data.get("title") || "").trim();
+  const action = String(data.get("action") || "").trim();
+  const output = String(data.get("output") || "").trim();
+  const minutes = clamp(Number(data.get("minutes")) || 1, 1, 480);
+  const tools = String(data.get("tools") || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  steps[state.workflowStep] = {
+    ...current,
+    title: title || current.title,
+    action,
+    output,
+    minutes,
+    tools
+  };
+  saveWorkflowDraft(role, steps);
+  toast(t("workflow.saved"));
+  render(true);
 });
 
 document.addEventListener("input", (event) => {
@@ -2600,6 +3567,10 @@ document.addEventListener("input", (event) => {
             : 0;
       count.textContent = t(state.lang === "zh" ? "sim.chars" : "sim.words", { n: units });
     }
+    return;
+  }
+  if (target.id === "workflow-role-search") {
+    filterWorkflowRoleOptions(target.value);
   }
 });
 
@@ -2611,6 +3582,7 @@ document.addEventListener("keydown", (event) => {
     }
     closeLanguageMenu();
     closeMobileNav();
+    closeWorkflowPicker(true);
   }
 
   if (

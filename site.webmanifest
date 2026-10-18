@@ -81,6 +81,18 @@
           "sizes": "192x192"
         }
       ]
+    },
+    {
+      "name": "Workflow Lab",
+      "short_name": "Workflow",
+      "description": "Inspect and edit a role's work loop",
+      "url": "./#/workflow",
+      "icons": [
+        {
+          "src": "./assets/icons/icon-rounded-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }
