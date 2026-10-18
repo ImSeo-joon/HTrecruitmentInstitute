@@ -1,4 +1,4 @@
-const CACHE_NAME = "high-table-shell-v18";
+const CACHE_NAME = "high-table-shell-v21";
 const APP_SHELL = [
   "./",
   "./index.html",
