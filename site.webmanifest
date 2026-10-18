@@ -1,0 +1,74 @@
+{
+  "name": "High Table Recruitment Institute",
+  "short_name": "High Table",
+  "description": "An independent atlas of competitive roles, pay architecture, work intensity, and interview signals.",
+  "id": "./",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#070a0f",
+  "theme_color": "#070a0f",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["business", "education", "productivity"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "./assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Role Atlas",
+      "short_name": "Roles",
+      "description": "Explore calibrated role briefs across global and China/HK employers",
+      "url": "./#/roles",
+      "icons": [
+        {
+          "src": "./assets/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Field Notes",
+      "short_name": "Notes",
+      "description": "Open the career intelligence library",
+      "url": "./#/intelligence",
+      "icons": [
+        {
+          "src": "./assets/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Interview Rehearsal",
+      "short_name": "Rehearsal",
+      "description": "Start a timed interview drill",
+      "url": "./#/simulate",
+      "icons": [
+        {
+          "src": "./assets/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
