@@ -1,11 +1,13 @@
-const tr = (en, zh, fr) => ({ en, zh, fr });
+import { JA_RESOURCE_COPY } from "./data-resources-ja.js";
+
+const tr = (en, zh, fr, ja) => ({ en, zh, fr, ja: ja || en });
 
 export const RESOURCE_CATEGORIES = [
-  { id: "all", label: tr("All notes", "全部资料", "Toutes les notes") },
-  { id: "pay", label: tr("Pay", "薪酬", "Rémunération") },
-  { id: "process", label: tr("Process", "流程", "Processus") },
-  { id: "rehearsal", label: tr("Rehearsal", "演练", "Entraînement") },
-  { id: "markets", label: tr("Markets", "市场", "Marchés") }
+  { id: "all", label: tr("All notes", "全部资料", "Toutes les notes", "すべてのノート") },
+  { id: "pay", label: tr("Pay", "薪酬", "Rémunération", "報酬") },
+  { id: "process", label: tr("Process", "流程", "Processus", "選考プロセス") },
+  { id: "rehearsal", label: tr("Rehearsal", "演练", "Entraînement", "面接練習") },
+  { id: "markets", label: tr("Markets", "市场", "Marchés", "市場") }
 ];
 
 export const RESOURCES = [
@@ -787,5 +789,13 @@ export const RESOURCES = [
     }
   }
 ];
+
+for (const resource of RESOURCES) {
+  const copy = JA_RESOURCE_COPY[resource.id];
+  if (copy) {
+    resource.title.ja = copy.title;
+    resource.summary.ja = copy.summary;
+  }
+}
 
 export const getResource = (id) => RESOURCES.find((resource) => resource.id === id);

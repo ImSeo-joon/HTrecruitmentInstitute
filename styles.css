@@ -6962,6 +6962,97 @@ html[data-lang="zh"] .section-head h2 {
   font-size: 9px;
 }
 
+/* ---------- Japanese typography ---------- */
+
+html[data-lang="ja"] {
+  --font-ja: "Hiragino Kaku Gothic ProN", "Yu Gothic", "YuGothic", "Noto Sans JP",
+    "Meiryo", sans-serif;
+}
+
+html[data-lang="ja"] body,
+html[data-lang="ja"] .btn,
+html[data-lang="ja"] .text-link,
+html[data-lang="ja"] .tag {
+  font-family: var(--font-ja);
+  letter-spacing: 0.015em;
+}
+
+html[data-lang="ja"] p,
+html[data-lang="ja"] li,
+html[data-lang="ja"] .role-summary,
+html[data-lang="ja"] .company-summary {
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+}
+
+html[data-lang="ja"] .hero-title {
+  font-family: var(--font-ja);
+  font-size: clamp(44px, 5.5vw, 86px);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.07em;
+}
+
+html[data-lang="ja"] .hero-title .accent {
+  font-family: "Yu Mincho", "Hiragino Mincho ProN", "Noto Serif JP", serif;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+html[data-lang="ja"] .page-head h1,
+html[data-lang="ja"] .sim-intro-copy h1,
+html[data-lang="ja"] .results-head h1 {
+  font-family: var(--font-ja);
+  font-size: clamp(36px, 4.1vw, 62px);
+  line-height: 1.14;
+  letter-spacing: -0.045em;
+}
+
+html[data-lang="ja"] .page-head h1 em,
+html[data-lang="ja"] .sim-intro-copy h1 em,
+html[data-lang="ja"] .results-head h1 em {
+  font-family: var(--font-ja);
+  font-style: normal;
+  font-weight: 800;
+}
+
+html[data-lang="ja"] .section-head h2 {
+  font-family: var(--font-ja);
+  font-size: clamp(22px, 2.7vw, 38px);
+  line-height: 1.32;
+  letter-spacing: -0.035em;
+}
+
+html[data-lang="ja"] .workflow-detail-top h2,
+html[data-lang="ja"] .workflow-decision-head h2,
+html[data-lang="ja"] .workflow-walk-main h1 {
+  font-family: var(--font-ja);
+  letter-spacing: -0.03em;
+  line-height: 1.3;
+}
+
+@media (max-width: 760px) {
+  html[data-lang="ja"] .hero-title {
+    font-size: clamp(36px, 10.5vw, 54px);
+    line-height: 1.04;
+  }
+
+  html[data-lang="ja"] .hero-title .hero-title-line {
+    display: block;
+  }
+
+  html[data-lang="ja"] .hero-title .hero-title-line + .hero-title-line::before {
+    content: none;
+  }
+
+  html[data-lang="ja"] .page-head h1,
+  html[data-lang="ja"] .sim-intro-copy h1,
+  html[data-lang="ja"] .results-head h1 {
+    font-size: clamp(32px, 9.2vw, 46px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -6986,4 +7077,497 @@ html[data-lang="zh"] .section-head h2 {
     background: white;
     color: black;
   }
+}
+
+
+/* =========================================================
+   Japanese edition — dawn city skin
+   ========================================================= */
+
+html[data-lang="ja"] {
+  --ink: #07101f;
+  --ink-2: #0b1729;
+  --surface: rgba(16, 31, 54, 0.82);
+  --surface-2: rgba(21, 40, 68, 0.88);
+  --surface-3: rgba(29, 52, 86, 0.92);
+  --paper: #f6f8ff;
+  --paper-soft: #c9d8ee;
+  --muted: #93a9c7;
+  --muted-2: #6f86a7;
+  --line: rgba(173, 205, 255, 0.17);
+  --line-strong: rgba(173, 205, 255, 0.34);
+  --acid: #91ddff;
+  --acid-2: #62c5f2;
+  --cyan: #a69bff;
+  --coral: #ff9caf;
+  --amber: #ffd08a;
+  --violet: #b9adff;
+  --danger: #ff7f90;
+  --font-ja-body: "Yu Gothic", "YuGothic", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Noto Sans JP", "Meiryo", sans-serif;
+  --font-ja-display: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN",
+    "Noto Serif JP", "Shippori Mincho", serif;
+  --font-display: var(--font-ja-body);
+  --font-body: var(--font-ja-body);
+  --font-accent: var(--font-ja-display);
+  --shadow-lg: 0 32px 90px rgba(1, 7, 18, 0.56);
+  --shadow-md: 0 18px 48px rgba(1, 7, 18, 0.38);
+}
+
+html[data-lang="ja"] {
+  overflow-x: clip;
+}
+
+html[data-lang="ja"],
+html[data-lang="ja"] body {
+  background-color: #07101f;
+  color: var(--paper);
+}
+
+html[data-lang="ja"] body {
+  font-family: var(--font-ja-body);
+  letter-spacing: 0.022em;
+  line-height: 1.76;
+}
+
+html[data-lang="ja"] .site-backdrop {
+  background-color: #07101f;
+  background-image:
+    linear-gradient(90deg, rgba(4, 11, 24, 0.88) 0%, rgba(4, 11, 24, 0.58) 30%, rgba(4, 11, 24, 0.18) 58%, rgba(4, 11, 24, 0.08) 78%, rgba(4, 11, 24, 0.44) 100%),
+    linear-gradient(180deg, rgba(4, 11, 24, 0.44) 0%, rgba(4, 11, 24, 0.04) 30%, rgba(4, 11, 24, 0.46) 100%),
+    radial-gradient(circle at 72% 48%, rgba(255, 178, 194, 0.14), transparent 38%),
+    url("./assets/high-table-japan-background.jpg");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: auto, auto, auto, cover;
+}
+
+html[data-lang="ja"] .backdrop-grid {
+  opacity: 0.13;
+  background-image:
+    linear-gradient(rgba(180, 213, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(180, 213, 255, 0.07) 1px, transparent 1px);
+  background-size: 72px 72px;
+}
+
+html[data-lang="ja"] .backdrop-glow-a {
+  background: #7bbcff;
+  opacity: 0.16;
+}
+
+html[data-lang="ja"] .backdrop-glow-b {
+  background: #ff9eb4;
+  opacity: 0.09;
+}
+
+html[data-lang="ja"] .backdrop-noise {
+  opacity: 0.026;
+}
+
+html[data-lang="ja"] .site-header {
+  background: rgba(6, 15, 31, 0.74);
+  border-bottom-color: rgba(173, 205, 255, 0.15);
+  backdrop-filter: blur(20px) saturate(1.18);
+}
+
+html[data-lang="ja"] .brand-mark {
+  background: rgba(7, 17, 34, 0.82);
+  border-color: rgba(173, 205, 255, 0.22);
+}
+
+html[data-lang="ja"] .brand-name {
+  font-family: var(--font-ja-display);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+html[data-lang="ja"] .primary-nav a {
+  font-family: var(--font-ja-body);
+  letter-spacing: 0.03em;
+}
+
+html[data-lang="ja"] .language-menu,
+html[data-lang="ja"] .select-input option {
+  background: #0c1a30;
+}
+
+html[data-lang="ja"] .hero-title {
+  font-family: var(--font-ja-display);
+  font-weight: 700;
+  line-height: 1.06;
+  letter-spacing: -0.032em;
+  text-shadow: 0 14px 42px rgba(2, 9, 24, 0.32);
+}
+
+html[data-lang="ja"] .hero-title .accent {
+  font-family: var(--font-ja-display);
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  background: linear-gradient(105deg, #fff1f4 0%, #ffc0cd 42%, #a8caff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 0 30px rgba(255, 178, 196, 0.18));
+}
+
+html[data-lang="ja"] .hero-title .accent::after {
+  background: repeating-linear-gradient(90deg, #ffb5c4 0 7px, transparent 7px 11px);
+}
+
+html[data-lang="ja"] .hero-title .outline {
+  color: transparent;
+  -webkit-text-stroke-color: rgba(214, 231, 255, 0.46);
+}
+
+html[data-lang="ja"] .page-head h1,
+html[data-lang="ja"] .sim-intro-copy h1,
+html[data-lang="ja"] .results-head h1,
+html[data-lang="ja"] .company-title-row h1,
+html[data-lang="ja"] .section-head h2,
+html[data-lang="ja"] .modal-panel h2,
+html[data-lang="ja"] .workflow-walk-main h1,
+html[data-lang="ja"] .workflow-detail-top h2,
+html[data-lang="ja"] .workflow-decision-head h2,
+html[data-lang="ja"] .role-card h3,
+html[data-lang="ja"] .instrument-card h3,
+html[data-lang="ja"] .resource-card h3,
+html[data-lang="ja"] .market-card h3 {
+  font-family: var(--font-ja-display);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.3;
+}
+
+html[data-lang="ja"] .page-head h1 em,
+html[data-lang="ja"] .sim-intro-copy h1 em,
+html[data-lang="ja"] .results-head h1 em {
+  font-family: var(--font-ja-display);
+  font-style: normal;
+  font-weight: 700;
+  color: #9fddff;
+}
+
+html[data-lang="ja"] .eyebrow,
+html[data-lang="ja"] .section-kicker,
+html[data-lang="ja"] .card-kicker,
+html[data-lang="ja"] .role-company-name {
+  font-family: var(--font-ja-body);
+  letter-spacing: 0.055em;
+}
+
+html[data-lang="ja"] .btn-primary {
+  color: #061225;
+  background: linear-gradient(135deg, #a5e1ff 0%, #8ea7ff 100%);
+  box-shadow: 0 12px 34px rgba(112, 171, 255, 0.2);
+}
+
+html[data-lang="ja"] .btn-primary:hover {
+  background: linear-gradient(135deg, #c2edff 0%, #a5b8ff 100%);
+}
+
+html[data-lang="ja"] .btn-ghost {
+  border-color: rgba(178, 208, 255, 0.28);
+  background: rgba(17, 35, 61, 0.46);
+  backdrop-filter: blur(10px);
+}
+
+html[data-lang="ja"] .instrument-card,
+html[data-lang="ja"] .market-card,
+html[data-lang="ja"] .company-tile,
+html[data-lang="ja"] .role-card,
+html[data-lang="ja"] .company-section,
+html[data-lang="ja"] .resource-card,
+html[data-lang="ja"] .sim-setup,
+html[data-lang="ja"] .history-card {
+  background:
+    linear-gradient(160deg, rgba(24, 45, 77, 0.86), rgba(9, 20, 39, 0.94));
+  border-color: rgba(166, 201, 255, 0.16);
+  box-shadow: 0 18px 54px rgba(1, 7, 18, 0.26);
+}
+
+html[data-lang="ja"] .instrument-card:hover,
+html[data-lang="ja"] .company-tile:hover,
+html[data-lang="ja"] .role-card:hover {
+  border-color: rgba(159, 221, 255, 0.42);
+  box-shadow: 0 22px 64px rgba(3, 11, 28, 0.42);
+}
+
+html[data-lang="ja"] .filter-shell {
+  background: rgba(9, 21, 40, 0.9);
+  border-color: rgba(166, 201, 255, 0.17);
+  backdrop-filter: blur(18px) saturate(1.12);
+}
+
+html[data-lang="ja"] .atlas-stat {
+  background: linear-gradient(155deg, rgba(24, 45, 77, 0.68), rgba(9, 20, 39, 0.84));
+  border-color: rgba(166, 201, 255, 0.14);
+}
+
+html[data-lang="ja"] .atlas-stat-value,
+html[data-lang="ja"] .acid {
+  color: #9fddff;
+}
+
+html[data-lang="ja"] .orbit-readout {
+  background: rgba(6, 17, 34, 0.86);
+  border-color: rgba(165, 201, 255, 0.18);
+}
+
+html[data-lang="ja"] .workflow-picker-trigger,
+html[data-lang="ja"] .workflow-picker-trigger[aria-expanded="true"],
+html[data-lang="ja"] .workflow-picker-panel,
+html[data-lang="ja"] .workflow-picker-search,
+html[data-lang="ja"] .workflow-picker-group-label {
+  background: #0b1930;
+}
+
+html[data-lang="ja"] .workflow-picker-search input,
+html[data-lang="ja"] .workflow-detail-meta > div,
+html[data-lang="ja"] .workflow-decision-stats > div,
+html[data-lang="ja"] .workflow-walk-stage,
+html[data-lang="ja"] .session-stage,
+html[data-lang="ja"] .role-info-cell {
+  background: #0c1a30;
+  border-color: rgba(166, 201, 255, 0.14);
+}
+
+html[data-lang="ja"] .score-ring::before {
+  background: #0c1a30;
+}
+
+html[data-lang="ja"] .modal-panel {
+  background: linear-gradient(165deg, #10213b 0%, #081427 100%);
+  border-color: rgba(166, 201, 255, 0.19);
+}
+
+html[data-lang="ja"] .modal-close {
+  background: rgba(8, 20, 39, 0.88);
+}
+
+html[data-lang="ja"] .toast {
+  background: #12243e;
+  border-color: rgba(166, 201, 255, 0.2);
+}
+
+html[data-lang="ja"] .company-ticker-wrap {
+  border-color: rgba(166, 201, 255, 0.12);
+  background: rgba(8, 19, 37, 0.48);
+}
+
+html[data-lang="ja"] .ticker-company {
+  color: #d7e6fb;
+}
+
+html[data-lang="ja"] .site-footer {
+  border-top-color: rgba(166, 201, 255, 0.13);
+  background: rgba(5, 13, 27, 0.62);
+  backdrop-filter: blur(16px);
+}
+
+html[data-lang="ja"] ::selection {
+  color: #061225;
+  background: #ffb5c5;
+}
+
+html[data-lang="ja"] ::-webkit-scrollbar-track {
+  background: #07101f;
+}
+
+html[data-lang="ja"] ::-webkit-scrollbar-thumb {
+  border-color: #07101f;
+  background: #29476e;
+}
+
+@media (max-width: 760px) {
+  html[data-lang="ja"] .site-backdrop {
+    background-image:
+      linear-gradient(180deg, rgba(4, 11, 24, 0.62) 0%, rgba(4, 11, 24, 0.3) 24%, rgba(4, 11, 24, 0.05) 50%, rgba(4, 11, 24, 0.62) 100%),
+      linear-gradient(90deg, rgba(4, 11, 24, 0.46) 0%, rgba(4, 11, 24, 0.1) 62%, rgba(4, 11, 24, 0.42) 100%),
+      url("./assets/high-table-japan-background.jpg");
+    background-position: 52% center;
+    background-size: auto, auto, cover;
+  }
+}
+
+
+html[data-lang="ja"] .page-head-side p,
+html[data-lang="ja"] .page-head-note {
+  padding: 14px 16px;
+  border: 1px solid rgba(171, 205, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(6, 17, 35, 0.56);
+  backdrop-filter: blur(12px);
+}
+
+html[data-lang="ja"] .page-head-note {
+  margin-top: 10px;
+}
+
+html[data-lang="ja"] .hero-title .outline {
+  -webkit-text-stroke-color: rgba(219, 235, 255, 0.58);
+}
+
+
+html[data-lang="ja"] .hero-title {
+  text-shadow: 0 10px 38px rgba(2, 8, 20, 0.66);
+}
+
+html[data-lang="ja"] .hero-sub,
+html[data-lang="ja"] .hero-meta,
+html[data-lang="ja"] .visual-coordinate {
+  text-shadow: 0 2px 20px rgba(2, 8, 20, 0.9);
+}
+
+html[data-lang="ja"] .orbit-ring.ring-1 {
+  border-color: rgba(145, 221, 255, 0.28);
+}
+
+html[data-lang="ja"] .orbit-ring.ring-4 {
+  border-color: rgba(200, 221, 255, 0.09);
+}
+
+html[data-lang="ja"] .orbit-core {
+  border-color: rgba(255, 181, 197, 0.4);
+  background:
+    radial-gradient(circle at 42% 35%, rgba(255, 178, 196, 0.16), transparent 52%),
+    radial-gradient(circle at 70% 70%, rgba(104, 185, 255, 0.13), transparent 60%),
+    rgba(7, 18, 36, 0.92);
+  box-shadow:
+    0 0 74px rgba(126, 188, 255, 0.14),
+    inset 0 0 42px rgba(255, 178, 196, 0.045);
+}
+
+html[data-lang="ja"] .install-chip {
+  border-color: rgba(145, 221, 255, 0.3);
+  background: rgba(145, 221, 255, 0.07);
+}
+
+html[data-lang="ja"] .install-chip:hover,
+html[data-lang="ja"] .install-chip.install-ready {
+  border-color: rgba(145, 221, 255, 0.7);
+  color: #061225;
+  background: linear-gradient(135deg, #a5e1ff, #9cb0ff);
+}
+
+html[data-lang="ja"] .saved-chip.has-saves svg {
+  fill: rgba(145, 221, 255, 0.14);
+}
+
+html[data-lang="ja"] .tag-acid,
+html[data-lang="ja"] .tag.tag-acid {
+  border-color: rgba(145, 221, 255, 0.32);
+  color: #b9ebff;
+  background: rgba(145, 221, 255, 0.075);
+}
+
+html[data-lang="ja"] .filter-toggle.is-active,
+html[data-lang="ja"] .filter-toggle:hover {
+  border-color: rgba(145, 221, 255, 0.4);
+  color: #bcecff;
+  background: rgba(145, 221, 255, 0.09);
+}
+
+html[data-lang="ja"] .decision-option:hover,
+html[data-lang="ja"] .decision-option.is-selected {
+  border-color: rgba(145, 221, 255, 0.46);
+  background: rgba(145, 221, 255, 0.065);
+}
+
+
+html[data-lang="ja"] .intel-sidebar .sidebar-card,
+html[data-lang="ja"] .sim-info-card {
+  padding: 20px;
+  border: 1px solid rgba(171, 205, 255, 0.15);
+  border-radius: 14px;
+  background: linear-gradient(160deg, rgba(15, 31, 55, 0.78), rgba(6, 17, 35, 0.88));
+  backdrop-filter: blur(16px);
+}
+
+html[data-lang="ja"] .sim-principles {
+  padding: 0 18px;
+  border: 1px solid rgba(171, 205, 255, 0.14);
+  border-radius: 14px;
+  background: rgba(6, 17, 35, 0.66);
+  backdrop-filter: blur(14px);
+}
+
+html[data-lang="ja"] .featured-note {
+  background:
+    radial-gradient(circle at 80% 20%, rgba(255, 178, 196, 0.12), transparent 34%),
+    radial-gradient(circle at 20% 80%, rgba(112, 188, 255, 0.1), transparent 42%),
+    linear-gradient(135deg, rgba(20, 40, 70, 0.84), rgba(7, 18, 36, 0.9));
+  border-color: rgba(171, 205, 255, 0.18);
+  backdrop-filter: blur(14px);
+}
+
+html[data-lang="ja"] .workflow-toolbar {
+  background: rgba(7, 18, 36, 0.9);
+  border-color: rgba(171, 205, 255, 0.18);
+}
+
+html[data-lang="ja"] .workflow-context {
+  background: linear-gradient(90deg, rgba(12, 27, 49, 0.92), rgba(8, 20, 39, 0.8));
+  border-color: rgba(171, 205, 255, 0.14);
+  backdrop-filter: blur(14px);
+}
+
+html[data-lang="ja"] .workflow-stage-tab {
+  color: var(--paper-soft);
+  background: rgba(8, 20, 39, 0.88);
+  border-color: rgba(171, 205, 255, 0.14);
+}
+
+html[data-lang="ja"] .workflow-stage-tab.is-active {
+  color: #f8fbff;
+  background: linear-gradient(155deg, rgba(31, 62, 101, 0.96), rgba(11, 27, 50, 0.96));
+}
+
+html[data-lang="ja"] .company-description {
+  padding: 15px 17px;
+  border: 1px solid rgba(171, 205, 255, 0.13);
+  border-radius: 14px;
+  background: rgba(6, 17, 35, 0.55);
+  backdrop-filter: blur(14px);
+}
+
+html[data-lang="ja"] .company-head-meta {
+  padding: 18px;
+  border: 1px solid rgba(171, 205, 255, 0.14);
+  border-radius: 16px;
+  background: rgba(6, 17, 35, 0.58);
+  backdrop-filter: blur(14px);
+}
+
+html[data-lang="ja"] .company-title-row h1 {
+  text-shadow: 0 8px 34px rgba(2, 8, 20, 0.72);
+}
+
+html[data-lang="ja"] .company-head .eyebrow {
+  color: #b9d7fa;
+}
+
+
+html[data-lang="ja"] .company-body .company-section {
+  padding: 22px;
+  border: 1px solid rgba(171, 205, 255, 0.13);
+  border-radius: 18px;
+  background: linear-gradient(160deg, rgba(15, 31, 55, 0.82), rgba(6, 17, 35, 0.9));
+  backdrop-filter: blur(14px);
+}
+
+html[data-lang="ja"] .company-aside-card {
+  padding: 20px;
+  border: 1px solid rgba(171, 205, 255, 0.14);
+  border-radius: 16px;
+  background: linear-gradient(160deg, rgba(15, 31, 55, 0.8), rgba(6, 17, 35, 0.9));
+  backdrop-filter: blur(14px);
+}
+
+html[data-lang="ja"] .company-aside-card + .company-aside-card {
+  margin-top: 12px;
+}
+
+html[data-lang="ja"] .company-body h2,
+html[data-lang="ja"] .company-aside-card h3 {
+  text-shadow: 0 2px 18px rgba(2, 8, 20, 0.8);
 }

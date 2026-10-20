@@ -1,4 +1,6 @@
-const tr = (en, zh, fr) => ({ en, zh, fr });
+import { JP_ROLES, JA_ROLE_TITLES } from "./data-japan.js";
+
+const tr = (en, zh, fr, ja) => ({ en, zh, fr, ja: ja || en });
 
 const EDU_CS = tr(
   "Bachelor's in CS/CE or equivalent demonstrated engineering evidence; master's common but not required.",
@@ -2330,14 +2332,19 @@ export const ROLES = [
 ];
 
 export const TRACKS = [
-  { id: "engineering", label: tr("Engineering", "工程", "Ingénierie"), color: "#79e7ee" },
-  { id: "ai", label: tr("AI & Research", "AI 与研究", "IA et recherche"), color: "#c8f56a" },
-  { id: "data", label: tr("Data", "数据", "Données"), color: "#a99cff" },
-  { id: "product", label: tr("Product", "产品", "Produit"), color: "#ffc95c" },
-  { id: "hardware", label: tr("Hardware & Silicon", "硬件与芯片", "Matériel et silicium"), color: "#ff9d7a" },
-  { id: "ops", label: tr("Programs & Cloud", "项目与云", "Programmes et cloud"), color: "#8fa7ff" }
+  { id: "engineering", label: tr("Engineering", "工程", "Ingénierie", "エンジニアリング"), color: "#79e7ee" },
+  { id: "ai", label: tr("AI & Research", "AI 与研究", "IA et recherche", "AI・研究"), color: "#c8f56a" },
+  { id: "data", label: tr("Data", "数据", "Données", "データ"), color: "#a99cff" },
+  { id: "product", label: tr("Product", "产品", "Produit", "プロダクト"), color: "#ffc95c" },
+  { id: "hardware", label: tr("Hardware & Silicon", "硬件与芯片", "Matériel et silicium", "ハードウェア・半導体"), color: "#ff9d7a" },
+  { id: "ops", label: tr("Programs & Cloud", "项目与云", "Programmes et cloud", "プログラム・クラウド"), color: "#8fa7ff" }
 ];
 
 export const getRole = (id) => ROLES.find((role) => role.id === id);
 export const getRolesForCompany = (companyId) => ROLES.filter((role) => role.companyId === companyId);
 export const getTrack = (id) => TRACKS.find((track) => track.id === id);
+
+ROLES.push(...JP_ROLES);
+for (const role of ROLES) {
+  if (JA_ROLE_TITLES[role.id]) role.title.ja = JA_ROLE_TITLES[role.id];
+}

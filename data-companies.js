@@ -1,4 +1,6 @@
-const tr = (en, zh, fr) => ({ en, zh, fr });
+import { JP_COMPANIES, JP_PORTALS } from "./data-japan.js";
+
+const tr = (en, zh, fr, ja) => ({ en, zh, fr, ja: ja || en });
 
 export const COMPANIES = [
   {
@@ -1207,6 +1209,7 @@ export const COMPANIES = [
 ];
 
 export const getCompany = (id) => COMPANIES.find((company) => company.id === id);
+COMPANIES.push(...JP_COMPANIES);
 
 export const JOB_PORTALS = {
   google: "https://www.google.com/about/careers/applications/jobs/results/",
@@ -1237,3 +1240,5 @@ export const JOB_PORTALS = {
 
 export const getJobPortal = (companyId) =>
   JOB_PORTALS[companyId] || "https://www.google.com/about/careers/applications/jobs/results/";
+
+Object.assign(JOB_PORTALS, JP_PORTALS);

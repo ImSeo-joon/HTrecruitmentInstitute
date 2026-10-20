@@ -1,4 +1,6 @@
-const tr = (en, zh, fr) => ({ en, zh, fr });
+import { JP_SOURCES } from "./data-japan.js";
+
+const tr = (en, zh, fr, ja) => ({ en, zh, fr, ja: ja || en });
 const careersNote = tr(
   "Official careers portal for current openings, teams and application instructions. Live listings can change.",
   "官方招聘门户，用于查看当前岗位、团队与申请说明。实时岗位会变化。",
@@ -312,3 +314,5 @@ export const SOURCE_GROUPS = [
   { id: "technical", label: tr("Technical references", "技术参考", "Références techniques") },
   { id: "reviews", label: tr("Employee signal", "员工信号", "Signal employés") }
 ];
+
+Object.assign(SOURCES, JP_SOURCES);

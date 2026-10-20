@@ -1,9 +1,11 @@
-const tr = (en, zh, fr) => ({ en, zh, fr });
+import { JA_PROMPTS } from "./data-prompts-ja.js";
+
+const tr = (en, zh, fr, ja) => ({ en, zh, fr, ja: ja || en });
 
 export const PROMPT_CATEGORIES = [
-  { id: "behavioral", label: tr("Behavioral", "行为面试", "Comportemental") },
-  { id: "technical", label: tr("Technical", "技术面试", "Technique") },
-  { id: "system", label: tr("System / case", "系统与案例", "Système / cas") }
+  { id: "behavioral", label: tr("Behavioral", "行为面试", "Comportemental", "行動面接") },
+  { id: "technical", label: tr("Technical", "技术面试", "Technique", "技術面接") },
+  { id: "system", label: tr("System / case", "系统与案例", "Système / cas", "システム・ケース") }
 ];
 
 export const PROMPTS = [
@@ -760,3 +762,5 @@ export const PROMPTS = [
 ];
 
 export const getPrompt = (id) => PROMPTS.find((prompt) => prompt.id === id);
+
+PROMPTS.push(...JA_PROMPTS);

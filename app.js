@@ -32,13 +32,15 @@ const STORAGE = {
 const TYPE_LABELS = {
   en: { read: "Field note", template: "Template", dataset: "Dataset" },
   zh: { read: "深度笔记", template: "模板", dataset: "数据集" },
-  fr: { read: "Note de terrain", template: "Modèle", dataset: "Jeu de données" }
+  fr: { read: "Note de terrain", template: "Modèle", dataset: "Jeu de données" },
+  ja: { read: "採用ノート", template: "テンプレート", dataset: "データセット" }
 };
 
 const DIFFICULTY_LABELS = {
   en: { core: "Core", stretch: "Stretch" },
   zh: { core: "核心", stretch: "挑战" },
-  fr: { core: "Cœur", stretch: "Stretch" }
+  fr: { core: "Cœur", stretch: "Stretch" },
+  ja: { core: "標準", stretch: "発展" }
 };
 
 const app = document.getElementById("app");
@@ -111,7 +113,11 @@ const state = {
   installPrompt: null
 };
 
-if (!["en", "zh", "fr"].includes(state.lang)) state.lang = "en";
+if (!["en", "zh", "fr", "ja"].includes(state.lang)) state.lang = "en";
+if (state.lang === "ja") state.roleFilters.region = "JP";
+state.jpRegionAuto = state.lang === "ja";
+state.workflowRoleAuto = !localStorage.getItem(STORAGE.workflowRole);
+if (state.lang === "ja" && state.workflowRoleAuto) state.workflowRoleId = "sony-senior-swe";
 if (!Array.isArray(state.saved.roles)) state.saved.roles = [];
 if (!Array.isArray(state.saved.resources)) state.saved.resources = [];
 if (!Array.isArray(state.history)) state.history = [];
@@ -133,6 +139,12 @@ function t(key, vars = {}) {
   );
 }
 
+function promptsForLang() {
+  return state.lang === "ja"
+    ? PROMPTS.filter((prompt) => prompt.locale === "ja")
+    : PROMPTS.filter((prompt) => prompt.locale !== "ja");
+}
+
 function tr(value) {
   if (!value) return "";
   if (typeof value === "string") return value;
@@ -140,7 +152,13 @@ function tr(value) {
 }
 
 function localeTag() {
-  return state.lang === "zh" ? "zh-CN" : state.lang === "fr" ? "fr-FR" : "en-US";
+  return state.lang === "zh"
+    ? "zh-CN"
+    : state.lang === "fr"
+      ? "fr-FR"
+      : state.lang === "ja"
+        ? "ja-JP"
+        : "en-US";
 }
 
 function formatDate(value, options = { month: "short", day: "numeric", year: "numeric" }) {
@@ -197,7 +215,8 @@ function applyStaticI18n() {
   document.querySelectorAll("[data-i18n]").forEach((node) => {
     node.textContent = t(node.dataset.i18n);
   });
-  document.documentElement.lang = state.lang === "zh" ? "zh-CN" : state.lang === "fr" ? "fr" : "en";
+  document.documentElement.lang =
+    state.lang === "zh" ? "zh-CN" : state.lang === "fr" ? "fr" : state.lang === "ja" ? "ja" : "en";
   document.documentElement.dataset.lang = state.lang;
   document.getElementById("current-language").textContent =
     LANGUAGES.find((language) => language.code === state.lang)?.short || "EN";
@@ -286,8 +305,26 @@ function navigate(path) {
 }
 
 function setLanguage(lang) {
-  if (!["en", "zh", "fr"].includes(lang)) return;
+  if (!["en", "zh", "fr", "ja"].includes(lang)) return;
   const scrollY = window.scrollY;
+  const previousLang = state.lang;
+  if (lang === "ja" && (state.roleFilters.region === "all" || state.jpRegionAuto)) {
+    state.roleFilters.region = "JP";
+    state.jpRegionAuto = true;
+  }
+  if (
+    previousLang === "ja" &&
+    lang !== "ja" &&
+    state.roleFilters.region === "JP" &&
+    state.jpRegionAuto
+  ) {
+    state.roleFilters.region = "all";
+    state.jpRegionAuto = false;
+  }
+  if (lang !== "ja") state.jpRegionAuto = false;
+  if (state.workflowRoleAuto) {
+    state.workflowRoleId = lang === "ja" ? "sony-senior-swe" : "google-senior-swe";
+  }
   state.lang = lang;
   localStorage.setItem(STORAGE.lang, lang);
   closeLanguageMenu();
@@ -371,18 +408,36 @@ function formatMoney(role, range) {
       "en-US"
     ).format(Math.round(max))}K`;
   }
+  if (role.currency === "JPY") {
+    const formatJpy = (value) => new Intl.NumberFormat("ja-JP").format(Math.round(value * 100));
+    return `¥${formatJpy(min)}万–${formatJpy(max)}万`;
+  }
   return `$${Math.round(min)}–${Math.round(max)}K`;
 }
 
 function payScore(role) {
   if (role.currency === "USD") return role.total[1];
   if (role.currency === "HKD") return role.total[1] * 0.128;
+  if (role.currency === "JPY") return role.total[1] * 6.7;
   return role.total[1] * 140;
 }
 
 function trackLabel(roleOrId) {
   const id = typeof roleOrId === "string" ? roleOrId : roleOrId.track;
   return tr(getTrack(id)?.label);
+}
+
+function levelLabel(level) {
+  if (state.lang !== "ja") return level;
+  return (
+    {
+      Senior: "シニア",
+      Mid: "ミッド",
+      Staff: "スタッフ",
+      Principal: "プリンシパル",
+      Lead: "リード"
+    }[level] || level
+  );
 }
 
 function trackColor(roleOrId) {
@@ -393,24 +448,33 @@ function trackColor(roleOrId) {
 function roleRegion(role) {
   if (role.region) return role.region;
   if (role.currency === "CNY") return "CN";
+  if (role.currency === "JPY") return "JP";
   return "US";
 }
 
 function regionLabel(region) {
   return t(
-    region === "CN" ? "common.regionCn" : region === "HK" ? "common.regionHk" : "common.regionUs"
+    region === "CN"
+      ? "common.regionCn"
+      : region === "HK"
+        ? "common.regionHk"
+        : region === "JP"
+          ? "common.regionJp"
+          : "common.regionUs"
   );
 }
 
 function compensationNote(role) {
   if (role.currency === "CNY") return t("common.cnyNote");
   if (role.currency === "HKD") return t("common.hkdNote");
+  if (role.currency === "JPY") return t("common.jpyNote");
   return t("common.usdNote");
 }
 
 function salaryBasisLabel(role) {
   if (role.currency === "CNY") return t("roles.cnyLabel");
   if (role.currency === "HKD") return t("roles.hkdLabel");
+  if (role.currency === "JPY") return t("roles.jpyLabel");
   return t("roles.usdLabel");
 }
 
@@ -420,6 +484,27 @@ function applicationUrlForRole(role) {
 
 function companySigil(company, className = "company-sigil") {
   return `<span class="${className}" style="--company-color:${company.color};--node-color:${company.color}">${escapeHtml(company.mark)}</span>`;
+}
+
+function companyName(company) {
+  return state.lang === "ja" && company?.nameJa ? company.nameJa : company?.name || "";
+}
+
+function orderedCompanies() {
+  if (state.lang !== "ja") return COMPANIES;
+  const japaneseFirst = new Set([
+    "sony",
+    "nintendo",
+    "rakuten",
+    "pfn",
+    "cyberagent",
+    "softbank",
+    "hitachi"
+  ]);
+  return [
+    ...COMPANIES.filter((company) => japaneseFirst.has(company.id)),
+    ...COMPANIES.filter((company) => !japaneseFirst.has(company.id))
+  ];
 }
 
 function densityBars(score, color = "#c8f56a") {
@@ -472,13 +557,20 @@ function render(preserveScroll = false, targetScrollY = null) {
 
 function renderHomePage() {
   const hongKongOrbit = ["hkex", "cathay", "mtr", "hangseng"];
+  const japanOrbit = ["sony", "nintendo", "rakuten", "pfn", "cyberagent", "softbank", "hitachi"];
   const orbitIds =
     state.lang === "zh"
       ? ["huawei", "bytedance", "tencent", "alibaba", ...hongKongOrbit]
-      : ["google", "meta", "openai", "nvidia", ...hongKongOrbit];
+      : state.lang === "ja"
+        ? [...japanOrbit, ...hongKongOrbit]
+        : ["google", "meta", "openai", "nvidia", ...hongKongOrbit];
   const orbitCompanies = orbitIds.map(getCompany).filter(Boolean);
   const orbitScope =
-    state.lang === "zh" ? t("home.orbitScopeCn") : t("home.orbitScopeGlobal");
+    state.lang === "zh"
+      ? t("home.orbitScopeCn")
+      : state.lang === "ja"
+        ? t("home.orbitScopeJp")
+        : t("home.orbitScopeGlobal");
   const payArchetypes = [
     { label: t("home.payAi"), mix: { base: 50, bonus: 0, equity: 50 } },
     { label: t("home.payBigTech"), mix: { base: 60, bonus: 12, equity: 28 } },
@@ -494,10 +586,10 @@ function renderHomePage() {
 
   const tickerGroup = () => `
     <div class="ticker-group">
-      ${COMPANIES.map(
+      ${orderedCompanies().map(
         (company) => `
           <span class="ticker-company" style="--c:${company.color}">
-            <span class="ticker-dot"></span>${escapeHtml(company.name)}
+            <span class="ticker-dot"></span>${escapeHtml(companyName(company))}
           </span>`
       ).join("")}
     </div>`;
@@ -505,10 +597,12 @@ function renderHomePage() {
   const orbitNodes = orbitCompanies
     .map(
       (company, index) => `
-        <div class="orbit-node node-${index + 1}" style="--node-color:${company.color}" title="${escapeHtml(company.name)}">
+        <div class="orbit-node node-${index + 1}" style="--node-color:${company.color}" title="${escapeHtml(companyName(company))}">
           <span class="node-mark">${escapeHtml(company.mark)}</span>
           <span class="node-name">${escapeHtml(
-            company.id === "cathay"
+            state.lang === "ja"
+              ? companyName(company)
+              : company.id === "cathay"
               ? "Cathay"
               : company.id === "hangseng"
                 ? "Hang Seng"
@@ -546,8 +640,8 @@ function renderHomePage() {
         <div class="hero-meta">
           <div class="hero-meta-item"><strong>${ROLES.length}</strong><span>${t("home.statRoles")}</span></div>
           <div class="hero-meta-item"><strong>${COMPANIES.length}</strong><span>${t("home.statCompanies")}</span></div>
-          <div class="hero-meta-item"><strong>${PROMPTS.length}</strong><span>${t("home.statPrompts")}</span></div>
-          <div class="hero-meta-item"><strong>03</strong><span>${t("home.statLanguages")}</span></div>
+          <div class="hero-meta-item"><strong>${promptsForLang().length}</strong><span>${t("home.statPrompts")}</span></div>
+          <div class="hero-meta-item"><strong>${String(LANGUAGES.length).padStart(2, "0")}</strong><span>${t("home.statLanguages")}</span></div>
         </div>
       </div>
       <div class="hero-visual">
@@ -639,7 +733,7 @@ function renderHomePage() {
           <p>${t("home.instrumentSimDesc")}</p>
           <div class="instrument-list">
             <span class="tag tag-coral">${t("home.tagSimulate")}</span>
-            <span class="tag">${PROMPTS.length} ${t("common.prompts")}</span>
+            <span class="tag">${promptsForLang().length} ${t("common.prompts")}</span>
           </div>
           <div class="instrument-footer">
             <span class="mono">${t("home.instrumentSimMeta")}</span>
@@ -735,14 +829,14 @@ function renderHomePage() {
         <p>${t("home.showcaseDesc")}</p>
       </div>
       <div class="company-showcase">
-        ${COMPANIES.map(
+        ${orderedCompanies().map(
           (company) => `
             <a class="company-tile" href="#/company/${company.id}" style="--company-color:${company.color}">
               <div class="company-tile-top">
                 ${companySigil(company)}
                 <span class="company-tile-arrow">${icon("arrowUpRight")}</span>
               </div>
-              <h3>${escapeHtml(company.name)}</h3>
+              <h3>${escapeHtml(companyName(company))}</h3>
               <span class="company-hq">${escapeHtml(company.hq)}</span>
               <div class="company-tile-foot">
                 <span>${getRolesForCompany(company.id).length} ${t("common.roles")}</span>
@@ -836,13 +930,13 @@ function roleCard(role) {
   const saved = state.saved.roles.includes(role.id);
   return `
     <article class="role-card" data-role-id="${role.id}" tabindex="0" role="button"
-      aria-label="${escapeHtml(tr(role.title))} — ${escapeHtml(company.name)}"
+      aria-label="${escapeHtml(tr(role.title))} — ${escapeHtml(companyName(company))}"
       style="--company-color:${company.color}">
       <div class="role-card-top">
         <div class="role-company">
           ${companySigil(company)}
           <div>
-            <span class="role-company-name">${escapeHtml(company.name)}</span>
+            <span class="role-company-name">${escapeHtml(companyName(company))}</span>
             <span class="role-company-loc">${escapeHtml(role.location)}</span>
           </div>
         </div>
@@ -858,7 +952,7 @@ function roleCard(role) {
           <span class="role-pay-label">${t("common.totalComp")}</span>
           <span class="role-pay-value">${formatMoney(role, role.total)}</span>
         </div>
-        <span class="role-level">${escapeHtml(role.level)}</span>
+        <span class="role-level">${escapeHtml(levelLabel(role.level))}</span>
       </div>
       <div class="role-facts">
         <div>
@@ -924,11 +1018,11 @@ function roleTable(roles) {
                   <td>
                     <span class="table-company" style="--company-color:${company.color}">
                       ${companySigil(company)}
-                      <span>${escapeHtml(company.name)}</span>
+                      <span>${escapeHtml(companyName(company))}</span>
                     </span>
                   </td>
                   <td><span class="table-role">${escapeHtml(tr(role.title))}</span></td>
-                  <td class="table-mono">${escapeHtml(role.level)}</td>
+                  <td class="table-mono">${escapeHtml(levelLabel(role.level))}</td>
                   <td>${escapeHtml(role.location)}</td>
                   <td class="table-mono">${formatMoney(role, role.total)}</td>
                   <td>${densityBars(role.density, company.color)}</td>
@@ -1382,7 +1476,7 @@ function workflowRolePickerMarkup(selectedRole) {
         aria-haspopup="listbox" aria-expanded="false">
         ${companySigil(selectedCompany)}
         <span class="workflow-picker-trigger-copy">
-          <span>${escapeHtml(selectedCompany.name)} · ${escapeHtml(selectedRole.level)}</span>
+          <span>${escapeHtml(companyName(selectedCompany))} · ${escapeHtml(levelLabel(selectedRole.level))}</span>
           <strong>${escapeHtml(tr(selectedRole.title))}</strong>
         </span>
         <span class="workflow-picker-chevron">${icon("chevronDown")}</span>
@@ -1401,13 +1495,13 @@ function workflowRolePickerMarkup(selectedRole) {
             return `
               <div class="workflow-picker-group" data-workflow-picker-group>
                 <div class="workflow-picker-group-label">
-                  <span>${escapeHtml(company.name)}</span>
+                  <span>${escapeHtml(companyName(company))}</span>
                   <em>${roles.length}</em>
                 </div>
                 ${roles
                   .map((role) => {
                     const search = normalizeText(
-                      `${tr(role.title)} ${company.name} ${role.level} ${role.location} ${trackLabel(role)}`
+                      `${tr(role.title)} ${companyName(company)} ${company.name} ${role.level} ${role.location} ${trackLabel(role)}`
                     );
                     return `
                       <button class="workflow-picker-option ${selectedRole.id === role.id ? "is-selected" : ""}"
@@ -1415,7 +1509,7 @@ function workflowRolePickerMarkup(selectedRole) {
                         data-workflow-role-option="${role.id}" data-search="${escapeHtml(search)}">
                         <span>
                           <strong>${escapeHtml(tr(role.title))}</strong>
-                          <em>${escapeHtml(role.level)} · ${escapeHtml(role.location)} · ${escapeHtml(trackLabel(role))}</em>
+                          <em>${escapeHtml(levelLabel(role.level))} · ${escapeHtml(role.location)} · ${escapeHtml(trackLabel(role))}</em>
                         </span>
                         ${selectedRole.id === role.id ? icon("check") : ""}
                       </button>`;
@@ -1531,7 +1625,7 @@ function renderWorkflowPage() {
             ${companySigil(company)}
             <div>
               <strong>${escapeHtml(tr(role.title))}</strong>
-              <span>${escapeHtml(company.name)} · ${escapeHtml(role.location)} · ${escapeHtml(role.level)}</span>
+              <span>${escapeHtml(companyName(company))} · ${escapeHtml(role.location)} · ${escapeHtml(levelLabel(role.level))}</span>
             </div>
           </div>
           <span class="workflow-context-rule"></span>
@@ -1664,14 +1758,14 @@ function renderWorkflowWalkthrough() {
       <div class="page workflow-walk-page">
         <div class="container workflow-walk-shell">
           <div class="workflow-walk-topbar">
-            <span class="workflow-walk-label">${t("workflow.demoKicker")} / ${escapeHtml(company.name)}</span>
+            <span class="workflow-walk-label">${t("workflow.demoKicker")} / ${escapeHtml(companyName(company))}</span>
             <button class="btn btn-ghost btn-small" type="button" data-workflow-exit>${icon("close")} ${t("workflow.demoExit")}</button>
           </div>
           <section class="workflow-complete-card">
             <div class="workflow-complete-mark">${icon("check")}</div>
             <div class="workflow-card-kicker">${t("workflow.demoKicker")}</div>
             <h1>${t("workflow.demoComplete")}</h1>
-            <p>${escapeHtml(tr(role.title))} · ${escapeHtml(company.name)}</p>
+            <p>${escapeHtml(tr(role.title))} · ${escapeHtml(companyName(company))}</p>
             <div class="workflow-complete-stats">
               <div><strong>${steps.length}</strong><span>${t("workflow.stages", { n: "" }).trim()}</span></div>
               <div><strong>${totalMinutes}</strong><span>min</span></div>
@@ -1700,7 +1794,7 @@ function renderWorkflowWalkthrough() {
     <div class="page workflow-walk-page">
       <div class="container workflow-walk-shell">
         <div class="workflow-walk-topbar">
-          <span class="workflow-walk-label">${t("workflow.demoKicker")} / ${escapeHtml(company.name)}</span>
+          <span class="workflow-walk-label">${t("workflow.demoKicker")} / ${escapeHtml(companyName(company))}</span>
           <button class="btn btn-ghost btn-small" type="button" data-workflow-exit>${icon("close")} ${t("workflow.demoExit")}</button>
         </div>
         <div class="workflow-walk-progress" aria-hidden="true">
@@ -1728,7 +1822,7 @@ function renderWorkflowWalkthrough() {
               total: steps.length
             })}</div>
             <h1>${escapeHtml(current.title)}</h1>
-            <p class="workflow-walk-role">${escapeHtml(tr(role.title))} · ${escapeHtml(company.name)}</p>
+            <p class="workflow-walk-role">${escapeHtml(tr(role.title))} · ${escapeHtml(companyName(company))}</p>
             <div class="workflow-walk-columns">
               <article>
                 <span>${t("workflow.input")}</span>
@@ -1841,7 +1935,7 @@ function renderSimulationPage() {
                   <option value="all" ${setup.company === "all" ? "selected" : ""}>${t("sim.allCompanies")}</option>
                   ${COMPANIES.map(
                     (company) =>
-                      `<option value="${company.id}" ${setup.company === company.id ? "selected" : ""}>${escapeHtml(company.name)}</option>`
+                      `<option value="${company.id}" ${setup.company === company.id ? "selected" : ""}>${escapeHtml(companyName(company))}</option>`
                   ).join("")}
                 </select>
               </div>
@@ -1907,7 +2001,7 @@ function shuffled(items) {
 }
 
 function promptPool(mode, difficulty, company) {
-  let pool = PROMPTS.filter((prompt) => mode === "mixed" || prompt.category === mode);
+  let pool = promptsForLang().filter((prompt) => mode === "mixed" || prompt.category === mode);
   if (difficulty !== "all") pool = pool.filter((prompt) => prompt.difficulty === difficulty);
   if (company !== "all") pool = pool.filter((prompt) => prompt.companies.includes(company));
   return pool;
@@ -1922,7 +2016,7 @@ function choosePromptIds() {
   if (selected.length < length) {
     const selectedIds = new Set(selected.map((prompt) => prompt.id));
     const fallback = shuffled(
-      PROMPTS.filter(
+      promptsForLang().filter(
         (prompt) =>
           !selectedIds.has(prompt.id) &&
           (mode === "mixed" || prompt.category === mode)
@@ -2026,12 +2120,12 @@ function renderSession() {
   const seconds = remainingSeconds();
   const category = PROMPT_CATEGORIES.find((item) => item.id === prompt.category);
   const companyNames = prompt.companies
-    .map((id) => getCompany(id)?.name)
+    .map((id) => companyName(getCompany(id)))
     .filter(Boolean)
     .slice(0, 3)
     .join(" · ");
   const units =
-    state.lang === "zh"
+    state.lang === "zh" || state.lang === "ja"
       ? answer.replace(/\s/g, "").length
       : answer.trim()
         ? answer.trim().split(/\s+/).length
@@ -2087,7 +2181,7 @@ function renderSession() {
           <section class="answer-panel">
             <div class="answer-label">
               <span>${t("sim.answerLabel")}</span>
-              <span class="word-count" id="word-count">${t(state.lang === "zh" ? "sim.chars" : "sim.words", { n: units })}</span>
+              <span class="word-count" id="word-count">${t(state.lang === "zh" || state.lang === "ja" ? "sim.chars" : "sim.words", { n: units })}</span>
             </div>
             <textarea id="answer-input" class="answer-input" spellcheck="true"
               placeholder="${t("sim.placeholder")}">${escapeHtml(answer)}</textarea>
@@ -2189,6 +2283,19 @@ const SCORING_LEXICON = {
     requirements: ["exigence", "latence", "échelle", "utilisateur", "sla", "contrainte", "qps"],
     architecture: ["service", "base de données", "cache", "file", "composant", "index", "partition"],
     failure: ["panne", "échec", "fallback", "dégrad", "réplique", "rollback", "backpressure", "timeout"]
+  },
+  ja: {
+    structure: ["なぜなら", "そのため", "結果", "トレードオフ", "制約", "まず", "次に", "最後に", "しかし", "代替", "判断", "影響", "学び"],
+    ownership: ["私", "自分", "主導", "担当", "設計", "実装", "決定", "提案", "改善", "立ち上げ"],
+    evidence: ["計測", "実験", "テスト", "ベンチマーク", "ユーザー", "遅延", "売上", "継続率", "削減", "増加", "改善", "リリース"],
+    tradeoff: ["なぜなら", "トレードオフ", "代替", "リスク", "制約", "しかし", "コスト", "欠点", "犠牲"],
+    result: ["結果", "削減", "増加", "改善", "リリース", "採用", "影響", "成果"],
+    reflection: ["学び", "教訓", "次回", "振り返り", "もし", "考え方"],
+    approach: ["設計", "アルゴリズム", "手法", "アーキテクチャ", "データ構造", "システム"],
+    validation: ["テスト", "検証", "実験", "計算量", "ベンチマーク", "プロファイリング", "監視"],
+    requirements: ["要件", "遅延", "規模", "ユーザー", "SLA", "制約", "QPS"],
+    architecture: ["サービス", "データベース", "キャッシュ", "キュー", "コンポーネント", "インデックス", "パーティション"],
+    failure: ["障害", "失敗", "フォールバック", "縮退", "ロールバック", "レプリカ", "バックプレッシャー", "タイムアウト"]
   }
 };
 
@@ -2219,7 +2326,7 @@ function analyzeAnswer(rawAnswer, prompt) {
   const lexicon = SCORING_LEXICON[state.lang] || SCORING_LEXICON.en;
   const plainLength = answer.replace(/\s+/g, "").length;
   const wordCount = answer.trim().split(/\s+/).filter(Boolean).length;
-  const units = state.lang === "zh" ? plainLength / 1.8 : wordCount;
+  const units = state.lang === "zh" ? plainLength / 1.8 : state.lang === "ja" ? plainLength / 2 : wordCount;
   const numbers = answer.match(/\d+(?:[.,]\d+)?\s?(?:%|ms|s|k|m|b|x|万|亿|人|天|周|个月|users|pts|qps)?/gi) || [];
   const technicalTokens = answer.match(/[A-Z][A-Za-z0-9+.-]{1,}|\b[A-Za-z]+\+\+|\b\d+(?:ms|s|k|m|x)\b/g) || [];
 
@@ -2523,14 +2630,14 @@ function openRoleModal(roleId) {
 
   openModal(
     `
-      <div class="modal-kicker">${t("detail.kicker", { company: company.name })}</div>
+      <div class="modal-kicker">${t("detail.kicker", { company: companyName(company) })}</div>
       <div class="modal-company-row" style="--company-color:${company.color}">
         ${companySigil(company)}
-        <span>${escapeHtml(company.name)} · ${escapeHtml(company.hq)}</span>
+        <span>${escapeHtml(companyName(company))} · ${escapeHtml(company.hq)}</span>
       </div>
       <h2>${escapeHtml(tr(role.title))}</h2>
       <div class="modal-meta-row">
-        <span class="tag tag-acid">${escapeHtml(role.level)}</span>
+        <span class="tag tag-acid">${escapeHtml(levelLabel(role.level))}</span>
         <span class="tag">${escapeHtml(trackLabel(role))}</span>
         <span class="tag">${escapeHtml(role.location)}</span>
         <span class="tag tag-cyan">${t("common.density")} ${role.density}/5</span>
@@ -2620,7 +2727,7 @@ function openRoleModal(roleId) {
           ${icon("workflow")} ${t("workflow.viewForRole")}
         </button>
       </div>
-      <p class="comp-note" style="margin-top:14px">${t("apply.note", { company: company.name })}</p>
+      <p class="comp-note" style="margin-top:14px">${t("apply.note", { company: companyName(company) })}</p>
     `,
     true
   );
@@ -2819,7 +2926,7 @@ function openInfoModal(type) {
                       .map((role) => {
                         const company = getCompany(role.companyId);
                         return `<button class="source-link" type="button" data-saved-role-open="${role.id}" style="text-align:left">
-                          <span><strong>${escapeHtml(tr(role.title))}</strong><em>${escapeHtml(company.name)} · ${escapeHtml(role.level)} · ${formatMoney(role, role.total)}</em></span>
+                          <span><strong>${escapeHtml(tr(role.title))}</strong><em>${escapeHtml(companyName(company))} · ${escapeHtml(levelLabel(role.level))} · ${formatMoney(role, role.total)}</em></span>
                           ${icon("arrowUpRight")}
                         </button>`;
                       })
@@ -2893,7 +3000,7 @@ function downloadRolesCsv() {
   const rows = roles.map((role) => {
     const company = getCompany(role.companyId);
     return [
-      company.name,
+      companyName(company),
       tr(role.title),
       regionLabel(roleRegion(role)),
       trackLabel(role),
@@ -2926,12 +3033,12 @@ function downloadStarterPack() {
   const date = formatDate(new Date());
   const roleLines = ROLES.map((role) => {
     const company = getCompany(role.companyId);
-    return `- **${company.name} — ${tr(role.title)}** · ${role.level} · ${formatMoney(role, role.total)} · ${t("common.density")} ${role.density}/5 · [${t("apply.applyShort")}](${applicationUrlForRole(role)})`;
+    return `- **${companyName(company)} — ${tr(role.title)}** · ${role.level} · ${formatMoney(role, role.total)} · ${t("common.density")} ${role.density}/5 · [${t("apply.applyShort")}](${applicationUrlForRole(role)})`;
   });
   const resourceLines = RESOURCES.map(
     (resource) => `- **${tr(resource.title)}** — ${tr(resource.summary)}`
   );
-  const promptLines = PROMPTS.map(
+  const promptLines = promptsForLang().map(
     (prompt) => `- **${tr(prompt.title)}** — ${tr(prompt.prompt)}`
   );
   const sourceLines = Object.values(SOURCES).map(
@@ -3094,6 +3201,7 @@ document.addEventListener("click", (event) => {
   const workflowRoleOption = target.closest("[data-workflow-role-option]");
   if (workflowRoleOption) {
     state.workflowRoleId = workflowRoleOption.dataset.workflowRoleOption;
+    state.workflowRoleAuto = false;
     localStorage.setItem(STORAGE.workflowRole, state.workflowRoleId);
     state.workflowStep = 0;
     state.workflowEdit = false;
@@ -3478,6 +3586,7 @@ document.addEventListener("click", (event) => {
   const workflowFromRole = target.closest("[data-workflow-from-role]");
   if (workflowFromRole) {
     state.workflowRoleId = workflowFromRole.dataset.workflowFromRole;
+    state.workflowRoleAuto = false;
     localStorage.setItem(STORAGE.workflowRole, state.workflowRoleId);
     state.workflowStep = 0;
     state.workflowEdit = false;
@@ -3505,6 +3614,7 @@ document.addEventListener("change", (event) => {
   const roleFilter = target.closest("[data-role-filter]");
   if (roleFilter) {
     state.roleFilters[roleFilter.dataset.roleFilter] = roleFilter.value;
+    if (roleFilter.dataset.roleFilter === "region") state.jpRegionAuto = false;
     refreshRoleResults();
     return;
   }
@@ -3560,12 +3670,12 @@ document.addEventListener("input", (event) => {
     const count = document.getElementById("word-count");
     if (count) {
       const units =
-        state.lang === "zh"
+        state.lang === "zh" || state.lang === "ja"
           ? target.value.replace(/\s/g, "").length
           : target.value.trim()
             ? target.value.trim().split(/\s+/).length
             : 0;
-      count.textContent = t(state.lang === "zh" ? "sim.chars" : "sim.words", { n: units });
+      count.textContent = t(state.lang === "zh" || state.lang === "ja" ? "sim.chars" : "sim.words", { n: units });
     }
     return;
   }
@@ -3667,11 +3777,6 @@ function renderRolesPage() {
     a.localeCompare(b, undefined, { numeric: true })
   );
   const currentRoles = getFilteredRoles();
-  const selectedCompany =
-    state.roleFilters.company === "all"
-      ? ""
-      : getCompany(state.roleFilters.company)?.name || "";
-
   app.innerHTML = `
     <div class="page">
       <div class="container">
@@ -3699,8 +3804,8 @@ function renderRolesPage() {
             <span class="atlas-stat-label">${t("roles.statCompanies")}</span>
           </div>
           <div class="atlas-stat">
-            <span class="atlas-stat-value">${ROLES.filter((role) => roleRegion(role) === "CN").length}</span>
-            <span class="atlas-stat-label">${t("roles.statMainland")}</span>
+            <span class="atlas-stat-value">${ROLES.filter((role) => roleRegion(role) === (state.lang === "ja" ? "JP" : "CN")).length}</span>
+            <span class="atlas-stat-label">${t(state.lang === "ja" ? "roles.statJapan" : "roles.statMainland")}</span>
           </div>
           <div class="atlas-stat">
             <span class="atlas-stat-value">${ROLES.filter((role) => roleRegion(role) === "HK").length}</span>
@@ -3720,9 +3825,9 @@ function renderRolesPage() {
             <div class="field">
               <select id="role-company" class="select-input" data-role-filter="company" aria-label="${t("common.company")}">
                 <option value="all">${t("common.allCompanies")}</option>
-                ${COMPANIES.map(
+                ${orderedCompanies().map(
                   (company) =>
-                    `<option value="${company.id}" ${selectedCompany === company.name ? "selected" : ""}>${escapeHtml(company.name)}</option>`
+                    `<option value="${company.id}" ${state.roleFilters.company === company.id ? "selected" : ""}>${escapeHtml(companyName(company))}</option>`
                 ).join("")}
               </select>
             </div>
@@ -3731,6 +3836,7 @@ function renderRolesPage() {
                 <option value="all">${t("common.allRegions")}</option>
                 <option value="CN" ${state.roleFilters.region === "CN" ? "selected" : ""}>${t("common.regionCn")}</option>
                 <option value="HK" ${state.roleFilters.region === "HK" ? "selected" : ""}>${t("common.regionHk")}</option>
+                <option value="JP" ${state.roleFilters.region === "JP" ? "selected" : ""}>${t("common.regionJp")}</option>
                 <option value="US" ${state.roleFilters.region === "US" ? "selected" : ""}>${t("common.regionUs")}</option>
               </select>
             </div>
@@ -3748,7 +3854,7 @@ function renderRolesPage() {
                 <option value="all">${t("common.allLevels")}</option>
                 ${levels.map(
                   (level) =>
-                    `<option value="${escapeHtml(level)}" ${state.roleFilters.level === level ? "selected" : ""}>${escapeHtml(level)}</option>`
+                    `<option value="${escapeHtml(level)}" ${state.roleFilters.level === level ? "selected" : ""}>${escapeHtml(levelLabel(level))}</option>`
                 ).join("")}
               </select>
             </div>
@@ -3820,12 +3926,13 @@ function clearRoleFilters() {
   state.roleFilters = {
     q: "",
     company: "all",
-    region: "all",
+    region: state.lang === "ja" ? "JP" : "all",
     track: "all",
     level: "all",
     sort: "default",
     savedOnly: false
   };
+  state.jpRegionAuto = state.lang === "ja";
   render();
 }
 
@@ -3866,7 +3973,7 @@ function renderCompanyPage(companyId) {
             <div class="eyebrow"><span class="eyebrow-index">ATLAS</span>${escapeHtml(company.legal)}</div>
             <div class="company-title-row" style="--company-color:${company.color}">
               ${companySigil(company)}
-              <h1>${escapeHtml(company.name)}</h1>
+              <h1>${escapeHtml(companyName(company))}</h1>
             </div>
             <p class="company-description">${escapeHtml(tr(company.summary))}</p>
           </div>
@@ -3895,7 +4002,7 @@ function renderCompanyPage(companyId) {
                   .map(
                     (org, index) => `
                       <article class="org-item" style="--company-color:${company.color}">
-                        <span class="org-item-index">0${index + 1} / ${escapeHtml(company.name.toUpperCase())}</span>
+                        <span class="org-item-index">0${index + 1} / ${escapeHtml(companyName(company))}</span>
                         <strong>${escapeHtml(tr(org.name))}</strong>
                         <span>${escapeHtml(tr(org.focus))}</span>
                       </article>`
@@ -3905,7 +4012,7 @@ function renderCompanyPage(companyId) {
             </section>
 
             <section class="company-section">
-              <h2>${t("company.openRoles", { company: company.name })}</h2>
+              <h2>${t("company.openRoles", { company: companyName(company) })}</h2>
               <div class="role-grid">
                 ${roles.map(roleCard).join("")}
               </div>

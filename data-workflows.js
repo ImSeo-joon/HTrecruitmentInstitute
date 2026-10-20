@@ -1,102 +1,114 @@
-const tr = (en, zh, fr) => ({ en, zh, fr });
+const tr = (en, zh, fr, ja) => ({ en, zh, fr, ja: ja || en });
 
 export const WORKFLOW_TRACKS = {
   engineering: {
-    label: tr("Engineering delivery loop", "工程交付闭环", "Boucle de delivery ingénierie"),
+    label: tr("Engineering delivery loop", "工程交付闭环", "Boucle de delivery ingénierie", "エンジニアリング・デリバリー"),
     summary: tr(
       "Turn an ambiguous request into a bounded, observable system change that can be shipped and reversed.",
       "把模糊需求转化为边界清晰、可观测、可上线也可回滚的系统变更。",
-      "Transformer une demande ambiguë en changement système borné, observable, livrable et réversible."
+      "Transformer une demande ambiguë en changement système borné, observable, livrable et réversible.",
+      "曖昧な依頼を、範囲が明確で観測可能、かつリリースと切り戻しができるシステム変更へ変換します。"
     ),
-    collaborators: tr("Product, SRE, dependent teams", "产品、SRE、依赖团队", "Produit, SRE, équipes dépendantes"),
+    collaborators: tr("Product, SRE, dependent teams", "产品、SRE、依赖团队", "Produit, SRE, équipes dépendantes", "プロダクト、SRE、依存チーム"),
     scenario: {
-      title: tr("Checkout latency spike", "支付链路延迟突增", "Pic de latence au paiement"),
+      title: tr("Checkout latency spike", "支付链路延迟突增", "Pic de latence au paiement", "決済レイテンシの急増"),
       brief: tr(
         "A payment endpoint doubled p95 latency after a routine release, and a major promotion starts in two days.",
         "一次常规发布后支付接口 p95 延迟翻倍，而大型促销将在两天后开始。",
-        "Un endpoint de paiement a doublé sa latence p95 après une release, deux jours avant une grande promotion."
+        "Un endpoint de paiement a doublé sa latence p95 après une release, deux jours avant une grande promotion.",
+        "定例リリース後に決済APIのp95レイテンシが2倍になり、大規模セール開始まで2日しかありません。"
       ),
-      stakeholder: tr("Payments, merchant support, SRE", "支付、商家支持、SRE", "Paiements, support marchand, SRE"),
-      success: tr("p95 back below 180 ms with no error-rate regression", "p95 恢复到 180ms 以下，且错误率不退化", "p95 sous 180 ms sans régression du taux d'erreur"),
-      risk: tr("Optimizing the wrong hop under launch pressure", "在发布压力下优化了错误的链路", "Optimiser le mauvais maillon sous pression")
+      stakeholder: tr("Payments, merchant support, SRE", "支付、商家支持、SRE", "Paiements, support marchand, SRE", "決済、加盟店サポート、SRE"),
+      success: tr("p95 back below 180 ms with no error-rate regression", "p95 恢复到 180ms 以下，且错误率不退化", "p95 sous 180 ms sans régression du taux d'erreur", "p95を180ms未満に戻し、エラー率を悪化させない"),
+      risk: tr("Optimizing the wrong hop under launch pressure", "在发布压力下优化了错误的链路", "Optimiser le mauvais maillon sous pression", "ローンチ圧力の中で誤った区間を最適化してしまう")
     },
     stages: [
       {
         id: "frame",
-        title: tr("Frame the constraint", "定义约束与影响面", "Cadrer la contrainte"),
+        title: tr("Frame the constraint", "定义约束与影响面", "Cadrer la contrainte", "制約と影響範囲を定義"),
         action: tr(
           "Read the request, map the critical path, set the SLO and blast radius, and name what is explicitly out of scope.",
           "阅读需求，画出关键路径，明确 SLO 与影响面，并写清哪些不在本次范围内。",
-          "Lire la demande, cartographier le chemin critique, fixer le SLO et le blast radius, puis expliciter le hors-périmètre."
+          "Lire la demande, cartographier le chemin critique, fixer le SLO et le blast radius, puis expliciter le hors-périmètre.",
+          "依頼を読み、クリティカルパス、SLO、影響範囲を整理し、今回の対象外を明記します。"
         ),
         output: tr(
           "A one-page system map with constraints, unknowns and a risk list.",
           "一页系统图，包含约束、未知项与风险清单。",
-          "Une page de cartographie avec contraintes, inconnues et liste de risques."
+          "Une page de cartographie avec contraintes, inconnues et liste de risques.",
+          "制約、未知事項、リスク一覧を含む1ページのシステムマップ。"
         ),
         minutes: 25,
         tools: ["Trace", "Design doc", "Incident history"]
       },
       {
         id: "design",
-        title: tr("Design the change", "设计变更方案", "Concevoir le changement"),
+        title: tr("Design the change", "设计变更方案", "Concevoir le changement", "変更案を設計"),
         action: tr(
           "Compare two options, define interfaces and rollout strategy, and record the trade-off you reject.",
           "比较两个方案，定义接口与上线策略，并记录被否决方案的权衡。",
-          "Comparer deux options, définir interfaces et stratégie de rollout, et documenter le compromis rejeté."
+          "Comparer deux options, définir interfaces et stratégie de rollout, et documenter le compromis rejeté.",
+          "2案を比較し、インターフェースと段階リリース方針を定義。採用しなかったトレードオフも記録します。"
         ),
         output: tr(
           "Decision note, interface contract and rollback plan.",
           "决策记录、接口契约与回滚方案。",
-          "Note de décision, contrat d'interface et plan de rollback."
+          "Note de décision, contrat d'interface et plan de rollback.",
+          "意思決定メモ、インターフェース契約、切り戻し計画。"
         ),
         minutes: 45,
         tools: ["Architecture diagram", "ADR", "Feature flag"]
       },
       {
         id: "build",
-        title: tr("Build in thin slices", "小步构建", "Construire par petites tranches"),
+        title: tr("Build in thin slices", "小步构建", "Construire par petites tranches", "小さく実装"),
         action: tr(
           "Ship behind a flag, add observability and tests, and keep every change reviewable.",
           "在开关后小步交付，补充可观测性与测试，确保每次变更都可评审。",
-          "Livrer derrière un flag, ajouter observabilité et tests, et garder chaque changement révisable."
+          "Livrer derrière un flag, ajouter observabilité et tests, et garder chaque changement révisable.",
+          "フィーチャーフラグの下で小さくリリースし、可観測性とテストを追加。すべての変更をレビュー可能に保ちます。"
         ),
         output: tr(
           "Reviewable diff, automated tests and first dashboards.",
           "可评审代码、自动化测试与首批监控看板。",
-          "Diff révisable, tests automatisés et premiers dashboards."
+          "Diff révisable, tests automatisés et premiers dashboards.",
+          "レビュー可能な差分、自動テスト、最初のダッシュボード。"
         ),
         minutes: 90,
         tools: ["Feature flag", "CI", "Unit tests"]
       },
       {
         id: "verify",
-        title: tr("Verify under pressure", "压力下验证", "Vérifier sous pression"),
+        title: tr("Verify under pressure", "压力下验证", "Vérifier sous pression", "負荷下で検証"),
         action: tr(
           "Test edge cases, profile the critical path, inject failures and challenge your blast-radius assumptions.",
           "测试边界条件，剖析关键路径，注入故障，并挑战对影响面的假设。",
-          "Tester les cas limites, profiler le chemin critique, injecter des pannes et challenger le blast radius."
+          "Tester les cas limites, profiler le chemin critique, injecter des pannes et challenger le blast radius.",
+          "境界条件を試し、クリティカルパスを計測。障害を注入し、影響範囲の仮定を疑います。"
         ),
         output: tr(
           "Evidence pack: tests, benchmark, failure notes and open risks.",
           "证据包：测试、基准、故障记录与未决风险。",
-          "Dossier de preuves : tests, benchmark, notes de panne et risques ouverts."
+          "Dossier de preuves : tests, benchmark, notes de panne et risques ouverts.",
+          "テスト、ベンチマーク、障害記録、未解決リスクを含む証拠パック。"
         ),
         minutes: 45,
         tools: ["Load test", "Profiler", "Chaos runbook"]
       },
       {
         id: "ship",
-        title: tr("Ship and observe", "上线并观察", "Livrer et observer"),
+        title: tr("Ship and observe", "上线并观察", "Livrer et observer", "リリースして観測"),
         action: tr(
           "Run a canary, watch guardrails, write the launch memo and hand off ownership.",
           "执行灰度，观察护栏指标，写发布记录并完成责任交接。",
-          "Lancer un canary, surveiller les garde-fous, rédiger la note de lancement et transférer l'ownership."
+          "Lancer un canary, surveiller les garde-fous, rédiger la note de lancement et transférer l'ownership.",
+          "カナリアリリースを実行し、ガードレール指標を監視。リリース記録を書き、責任を引き継ぎます。"
         ),
         output: tr(
           "Launch record, alerts and follow-up list.",
           "发布记录、告警与后续事项清单。",
-          "Dossier de lancement, alertes et liste de suivi."
+          "Dossier de lancement, alertes et liste de suivi.",
+          "リリース記録、アラート、フォローアップ一覧。"
         ),
         minutes: 40,
         tools: ["Canary", "Dashboard", "Launch memo"]
@@ -104,28 +116,30 @@ export const WORKFLOW_TRACKS = {
     ]
   },
   ai: {
-    label: tr("AI research-to-release loop", "AI 研究与发布闭环", "Boucle recherche-IA à la release"),
+    label: tr("AI research-to-release loop", "AI 研究与发布闭环", "Boucle recherche-IA à la release", "AI研究からリリースへ"),
     summary: tr(
       "Frame a model decision, design evidence, iterate without fooling yourself, then gate deployment on measured behavior.",
       "先定义模型要支持的决策，设计证据，在避免自欺的迭代后，用可测行为决定是否发布。",
-      "Cadrer une décision modèle, concevoir les preuves, itérer sans s'auto-tromper, puis conditionner le déploiement aux comportements mesurés."
+      "Cadrer une décision modèle, concevoir les preuves, itérer sans s'auto-tromper, puis conditionner le déploiement aux comportements mesurés.",
+      "モデルが支える意思決定を定め、証拠を設計し、自己欺瞞なく反復。測定された挙動を条件に公開します。"
     ),
-    collaborators: tr("Research, product, safety, infrastructure", "研究、产品、安全、基础设施", "Recherche, produit, sûreté, infrastructure"),
+    collaborators: tr("Research, product, safety, infrastructure", "研究、产品、安全、基础设施", "Recherche, produit, sûreté, infrastructure", "研究、プロダクト、セーフティ、基盤"),
     scenario: {
-      title: tr("Support agent gives a wrong refund answer", "客服智能体给出错误退款答案", "Un agent support se trompe sur les remboursements"),
+      title: tr("Support agent gives a wrong refund answer", "客服智能体给出错误退款答案", "Un agent support se trompe sur les remboursements", "サポートAIが返金条件を誤答"),
       brief: tr(
         "A retrieval-augmented support agent is confident but wrong on refunds, and launch is one week away.",
         "一个检索增强客服智能体在退款问题上自信但错误，距离上线只剩一周。",
-        "Un agent support augmenté par retrieval est confiant mais faux sur les remboursements, une semaine avant le lancement."
+        "Un agent support augmenté par retrieval est confiant mais faux sur les remboursements, une semaine avant le lancement.",
+        "検索拡張型のサポートAIが返金条件について自信満々に誤答。公開まで1週間です。"
       ),
-      stakeholder: tr("Support, legal, product, safety", "客服、法务、产品、安全", "Support, juridique, produit, sûreté"),
-      success: tr("False-answer rate under 2% on high-risk intents, latency under 1.8 s", "高风险意图的错误率低于 2%，延迟低于 1.8 秒", "Taux de fausses réponses sous 2 % sur les intentions à risque, latence sous 1,8 s"),
-      risk: tr("Improving average quality while missing the high-severity slice", "平均质量提升，却漏掉高风险切片", "Améliorer la moyenne en manquant les segments critiques")
+      stakeholder: tr("Support, legal, product, safety", "客服、法务、产品、安全", "Support, juridique, produit, sûreté", "サポート、法務、プロダクト、セーフティ"),
+      success: tr("False-answer rate under 2% on high-risk intents, latency under 1.8 s", "高风险意图的错误率低于 2%，延迟低于 1.8 秒", "Taux de fausses réponses sous 2 % sur les intentions à risque, latence sous 1,8 s", "高リスク意図の誤答率2%未満、レイテンシ1.8秒未満"),
+      risk: tr("Improving average quality while missing the high-severity slice", "平均质量提升，却漏掉高风险切片", "Améliorer la moyenne en manquant les segments critiques", "平均品質は上がるが高リスク領域を取りこぼす")
     },
     stages: [
       {
         id: "frame",
-        title: tr("Frame the decision", "定义决策与风险", "Cadrer la décision"),
+        title: tr("Frame the decision", "定义决策与风险", "Cadrer la décision", "意思決定を定義"),
         action: tr(
           "Name the user decision, task distribution, target behavior, cost limit and abstention rule.",
           "明确用户决策、任务分布、目标行为、成本上限与拒答规则。",
@@ -137,7 +151,7 @@ export const WORKFLOW_TRACKS = {
       },
       {
         id: "evals",
-        title: tr("Design data and evals", "设计数据与评估", "Concevoir données et évaluations"),
+        title: tr("Design data and evals", "设计数据与评估", "Concevoir données et évaluations", "データと評価を設計"),
         action: tr(
           "Curate high-risk slices, adversarial cases and a judge rubric; check leakage and label reliability.",
           "构造高风险切片、对抗样本与评审规则，并检查数据泄漏与标注可靠性。",
@@ -149,7 +163,7 @@ export const WORKFLOW_TRACKS = {
       },
       {
         id: "baseline",
-        title: tr("Establish a baseline", "建立基线", "Établir une base"),
+        title: tr("Establish a baseline", "建立基线", "Établir une base", "ベースラインを確立"),
         action: tr(
           "Run a simple baseline, measure latency and cost, and inspect where failures cluster.",
           "运行简单基线，测量延迟与成本，并分析失败集中在哪里。",
@@ -161,7 +175,7 @@ export const WORKFLOW_TRACKS = {
       },
       {
         id: "iterate",
-        title: tr("Iterate without self-deception", "避免自欺地迭代", "Itérer sans s'auto-tromper"),
+        title: tr("Iterate without self-deception", "避免自欺地迭代", "Itérer sans s'auto-tromper", "自己欺瞞なく反復"),
         action: tr(
           "Change one variable at a time, compare slices, document uncertainty and keep failed attempts.",
           "一次只改变一个变量，比较切片，记录不确定性，并保留失败尝试。",
@@ -173,7 +187,7 @@ export const WORKFLOW_TRACKS = {
       },
       {
         id: "gate",
-        title: tr("Evaluate and gate release", "评估并设置发布门槛", "Évaluer et conditionner la release"),
+        title: tr("Evaluate and gate release", "评估并设置发布门槛", "Évaluer et conditionner la release", "評価して公開条件を判定"),
         action: tr(
           "Stress-test safety, compare against the gate, stage rollout and define monitoring and rollback.",
           "进行安全压力测试，对照发布门槛，分阶段上线并定义监控与回滚。",
@@ -186,28 +200,30 @@ export const WORKFLOW_TRACKS = {
     ]
   },
   data: {
-    label: tr("Decision-grade analytics loop", "决策级分析闭环", "Boucle analytique décisionnelle"),
+    label: tr("Decision-grade analytics loop", "决策级分析闭环", "Boucle analytique décisionnelle", "意思決定のための分析"),
     summary: tr(
       "Turn a fuzzy business question into a defensible measurement, then separate signal from coincidence.",
       "把模糊业务问题转化为可辩护的测量，再区分真实信号与巧合。",
-      "Transformer une question métier floue en mesure défendable, puis distinguer signal et coïncidence."
+      "Transformer une question métier floue en mesure défendable, puis distinguer signal et coïncidence.",
+      "曖昧な事業課題を説明可能な測定に変え、偶然と本当のシグナルを分けます。"
     ),
-    collaborators: tr("Product, finance, engineering, operations", "产品、财务、工程、运营", "Produit, finance, ingénierie, opérations"),
+    collaborators: tr("Product, finance, engineering, operations", "产品、财务、工程、运营", "Produit, finance, ingénierie, opérations", "プロダクト、財務、エンジニアリング、運用"),
     scenario: {
-      title: tr("Metric up, revenue flat", "指标涨了，收入没涨", "Métrique en hausse, revenu stable"),
+      title: tr("Metric up, revenue flat", "指标涨了，收入没涨", "Métrique en hausse, revenu stable", "指標は上昇、売上は横ばい"),
       brief: tr(
         "Weekly engagement is up after a redesign, but revenue is flat and executives want a causal story.",
         "改版后周活跃提升，但收入持平，管理层希望得到一个可信的因果解释。",
-        "L'engagement hebdomadaire augmente après un redesign, mais le revenu stagne ; la direction veut une explication causale."
+        "L'engagement hebdomadaire augmente après un redesign, mais le revenu stagne ; la direction veut une explication causale.",
+        "リニューアル後に週次エンゲージメントは上がったものの売上は横ばい。経営陣は因果的な説明を求めています。"
       ),
-      stakeholder: tr("Growth, finance, product leadership", "增长、财务、产品管理层", "Growth, finance, direction produit"),
-      success: tr("A defensible driver and a clear stop/continue recommendation", "找到可辩护的驱动因素，并给出明确的继续/停止建议", "Un facteur défendable et une recommandation claire"),
-      risk: tr("Mistaking segment mix for behavior change", "把结构变化误当成行为变化", "Confondre changement de mix et changement de comportement")
+      stakeholder: tr("Growth, finance, product leadership", "增长、财务、产品管理层", "Growth, finance, direction produit", "グロース、財務、プロダクト責任者"),
+      success: tr("A defensible driver and a clear stop/continue recommendation", "找到可辩护的驱动因素，并给出明确的继续/停止建议", "Un facteur défendable et une recommandation claire", "説明可能な要因と、継続・停止の明確な提言"),
+      risk: tr("Mistaking segment mix for behavior change", "把结构变化误当成行为变化", "Confondre changement de mix et changement de comportement", "セグメント構成の変化を行動変化と誤認する")
     },
     stages: [
       {
         id: "question",
-        title: tr("Question and decision", "定义问题与决策", "Question et décision"),
+        title: tr("Question and decision", "定义问题与决策", "Question et décision", "問いと意思決定を定義"),
         action: tr(
           "Write the decision, estimand, population, time window and guardrail metrics before touching the data.",
           "在看数据前，先写清决策、估计对象、人群、时间窗口与护栏指标。",
@@ -219,7 +235,7 @@ export const WORKFLOW_TRACKS = {
       },
       {
         id: "audit",
-        title: tr("Audit the data", "审计数据", "Auditer les données"),
+        title: tr("Audit the data", "审计数据", "Auditer les données", "データを監査"),
         action: tr(
           "Check lineage, completeness, selection effects and whether the event means what the dashboard says.",
           "检查数据血缘、完整性、选择效应，以及事件定义是否与看板含义一致。",
@@ -231,7 +247,7 @@ export const WORKFLOW_TRACKS = {
       },
       {
         id: "analyze",
-        title: tr("Analyze and test", "分析与检验", "Analyser et tester"),
+        title: tr("Analyze and test", "分析与检验", "Analyser et tester", "分析と検証"),
         action: tr(
           "Segment the effect, use a causal design where possible, and report uncertainty instead of a single point.",
           "拆分效应，尽可能使用因果设计，并报告不确定性而非单一数值。",
@@ -243,7 +259,7 @@ export const WORKFLOW_TRACKS = {
       },
       {
         id: "stress",
-        title: tr("Stress-test the story", "压力测试结论", "Stress-tester le récit"),
+        title: tr("Stress-test the story", "压力测试结论", "Stress-tester le récit", "結論をストレステスト"),
         action: tr(
           "List alternative explanations, segment anomalies and ask a skeptical reviewer to attack the conclusion.",
           "列出替代解释、分群异常，并让一位怀疑者挑战结论。",
@@ -255,7 +271,7 @@ export const WORKFLOW_TRACKS = {
       },
       {
         id: "decide",
-        title: tr("Decide and monitor", "决策与监控", "Décider et monitorer"),
+        title: tr("Decide and monitor", "决策与监控", "Décider et monitorer", "意思決定とモニタリング"),
         action: tr(
           "Recommend a decision, state what would change your mind, and define leading indicators.",
           "给出决策建议，说明什么会改变你的判断，并定义领先指标。",
@@ -268,28 +284,30 @@ export const WORKFLOW_TRACKS = {
     ]
   },
   product: {
-    label: tr("Product discovery-to-learning loop", "产品发现与学习闭环", "Boucle découverte-apprentissage produit"),
+    label: tr("Product discovery-to-learning loop", "产品发现与学习闭环", "Boucle découverte-apprentissage produit", "プロダクト発見から学習へ"),
     summary: tr(
       "Reduce uncertainty about users and value before committing the organization to a build.",
       "在组织投入建设前，先降低关于用户与价值的最大不确定性。",
-      "Réduire l'incertitude sur les utilisateurs et la valeur avant d'engager l'organisation."
+      "Réduire l'incertitude sur les utilisateurs et la valeur avant d'engager l'organisation.",
+      "組織が開発へ投資する前に、ユーザーと価値に関する不確実性を下げます。"
     ),
-    collaborators: tr("Design, engineering, data, go-to-market", "设计、工程、数据、市场", "Design, ingénierie, data, go-to-market"),
+    collaborators: tr("Design, engineering, data, go-to-market", "设计、工程、数据、市场", "Design, ingénierie, data, go-to-market", "デザイン、エンジニアリング、データ、事業"),
     scenario: {
-      title: tr("Activation drops for new teams", "新团队激活率下降", "Baisse d'activation des nouvelles équipes"),
+      title: tr("Activation drops for new teams", "新团队激活率下降", "Baisse d'activation des nouvelles équipes", "新規チームのアクティベーション低下"),
       brief: tr(
         "A new onboarding flow increased sign-ups but reduced week-one activation for newly created teams.",
         "新的引导流程提高了注册量，却降低了新建团队的首周激活率。",
-        "Un nouvel onboarding augmente les inscriptions mais réduit l'activation à J7 des nouvelles équipes."
+        "Un nouvel onboarding augmente les inscriptions mais réduit l'activation à J7 des nouvelles équipes.",
+        "新しいオンボーディングで登録数は増えたものの、新規チームの初週アクティベーションが下がりました。"
       ),
-      stakeholder: tr("Growth, design, customer success", "增长、设计、客户成功", "Growth, design, customer success"),
-      success: tr("Lift activation by 5 points without increasing support load", "激活率提升 5 个百分点且不增加客服负担", "Gagner 5 points d'activation sans augmenter la charge support"),
-      risk: tr("Optimizing completion instead of meaningful use", "优化了流程完成率，而非真正使用", "Optimiser la complétion plutôt que l'usage réel")
+      stakeholder: tr("Growth, design, customer success", "增长、设计、客户成功", "Growth, design, customer success", "グロース、デザイン、カスタマーサクセス"),
+      success: tr("Lift activation by 5 points without increasing support load", "激活率提升 5 个百分点且不增加客服负担", "Gagner 5 points d'activation sans augmenter la charge support", "サポート負荷を増やさずアクティベーションを5ポイント改善"),
+      risk: tr("Optimizing completion instead of meaningful use", "优化了流程完成率，而非真正使用", "Optimiser la complétion plutôt que l'usage réel", "本当の利用ではなく完了率だけを最適化する")
     },
     stages: [
       {
         id: "discover",
-        title: tr("Discover the job", "发现真实任务", "Découvrir le vrai besoin"),
+        title: tr("Discover the job", "发现真实任务", "Découvrir le vrai besoin", "本当のジョブを発見"),
         action: tr(
           "Talk to recent users and rejecters, observe the current workaround and separate stated requests from needs.",
           "访谈新用户与流失用户，观察现有替代方案，并区分用户说的请求与真实需求。",
@@ -301,7 +319,7 @@ export const WORKFLOW_TRACKS = {
       },
       {
         id: "evidence",
-        title: tr("Synthesize evidence", "整合证据", "Synthétiser les preuves"),
+        title: tr("Synthesize evidence", "整合证据", "Synthétiser les preuves", "証拠を統合"),
         action: tr(
           "Triangulate qualitative and quantitative signals, size the segment and define the behavior to change.",
           "三角验证定性定量信号，评估人群规模，并定义要改变的行为。",
@@ -313,7 +331,7 @@ export const WORKFLOW_TRACKS = {
       },
       {
         id: "prototype",
-        title: tr("Prototype and prioritize", "原型与优先级", "Prototyper et prioriser"),
+        title: tr("Prototype and prioritize", "原型与优先级", "Prototyper et prioriser", "プロトタイプと優先順位"),
         action: tr(
           "Prototype the smallest learning artifact, test it, and explicitly choose what to cut.",
           "制作最小的学习原型，进行测试，并明确选择要砍掉什么。",
@@ -325,7 +343,7 @@ export const WORKFLOW_TRACKS = {
       },
       {
         id: "spec",
-        title: tr("Spec and align", "规格与对齐", "Spécifier et aligner"),
+        title: tr("Spec and align", "规格与对齐", "Spécifier et aligner", "仕様化と合意"),
         action: tr(
           "Write the decision, scope, dependencies, instrumentation and staged rollout; resolve objections in writing.",
           "写清决策、范围、依赖、埋点与分阶段发布，并通过书面方式解决异议。",
@@ -337,7 +355,7 @@ export const WORKFLOW_TRACKS = {
       },
       {
         id: "learn",
-        title: tr("Launch and learn", "发布与学习", "Lancer et apprendre"),
+        title: tr("Launch and learn", "发布与学习", "Lancer et apprendre", "公開して学ぶ"),
         action: tr(
           "Stage the launch, watch adoption and harm signals, and decide whether to scale, iterate or stop.",
           "分阶段发布，观察采用与伤害信号，并决定扩展、迭代或停止。",
@@ -350,28 +368,30 @@ export const WORKFLOW_TRACKS = {
     ]
   },
   hardware: {
-    label: tr("Hardware concept-to-production loop", "硬件概念到量产闭环", "Boucle concept-production matériel"),
+    label: tr("Hardware concept-to-production loop", "硬件概念到量产闭环", "Boucle concept-production matériel", "ハードウェア構想から量産へ"),
     summary: tr(
       "Prove a physical design against power, thermal, reliability and manufacturing constraints before volume.",
       "在量产前证明物理设计能同时满足功耗、散热、可靠性与制造约束。",
-      "Prouver un design physique face aux contraintes de puissance, thermique, fiabilité et fabrication avant le volume."
+      "Prouver un design physique face aux contraintes de puissance, thermique, fiabilité et fabrication avant le volume.",
+      "量産前に、消費電力、熱、信頼性、製造制約を満たす物理設計であることを証明します。"
     ),
-    collaborators: tr("EE, mechanical, software, operations, quality", "电子、结构、软件、运营、质量", "EE, mécanique, logiciel, opérations, qualité"),
+    collaborators: tr("EE, mechanical, software, operations, quality", "电子、结构、软件、运营、质量", "EE, mécanique, logiciel, opérations, qualité", "電気、機構、ソフト、運用、品質"),
     scenario: {
-      title: tr("Thermal throttle only in hot climates", "仅高温地区出现热降频", "Throttling thermique en climat chaud"),
+      title: tr("Thermal throttle only in hot climates", "仅高温地区出现热降频", "Throttling thermique en climat chaud", "高温地域だけで熱スロットリング"),
       brief: tr(
         "A device passes lab tests but throttles in hot climates, six weeks before launch.",
         "设备通过实验室测试，却在炎热气候下降频，距离发布只剩六周。",
-        "Un appareil passe les tests labo mais throttle en climat chaud, six semaines avant le lancement."
+        "Un appareil passe les tests labo mais throttle en climat chaud, six semaines avant le lancement.",
+        "実験室テストは通ったものの高温地域でスロットリング。発売まで6週間です。"
       ),
-      stakeholder: tr("Hardware, software, quality, supply chain", "硬件、软件、质量、供应链", "Matériel, logiciel, qualité, supply chain"),
-      success: tr("Sustained performance within 8% of baseline after 30 minutes at 40°C", "40°C 运行 30 分钟后，持续性能保持在基线 8% 以内", "Performance soutenue à 8 % de la base après 30 min à 40 °C"),
-      risk: tr("Solving thermals by damaging battery life or durability", "以牺牲电池寿命或耐久性为代价解决散热", "Résoudre le thermique en dégradant batterie ou durabilité")
+      stakeholder: tr("Hardware, software, quality, supply chain", "硬件、软件、质量、供应链", "Matériel, logiciel, qualité, supply chain", "ハード、ソフト、品質、サプライチェーン"),
+      success: tr("Sustained performance within 8% of baseline after 30 minutes at 40°C", "40°C 运行 30 分钟后，持续性能保持在基线 8% 以内", "Performance soutenue à 8 % de la base après 30 min à 40 °C", "40°Cで30分後も持続性能がベースラインの8%以内"),
+      risk: tr("Solving thermals by damaging battery life or durability", "以牺牲电池寿命或耐久性为代价解决散热", "Résoudre le thermique en dégradant batterie ou durabilité", "バッテリー寿命や耐久性を犠牲に熱を解決する")
     },
     stages: [
       {
         id: "requirements",
-        title: tr("Requirements and budgets", "需求与预算", "Exigences et budgets"),
+        title: tr("Requirements and budgets", "需求与预算", "Exigences et budgets", "要件と予算配分"),
         action: tr(
           "Translate product goals into power, thermal, area, reliability and schedule budgets; define pass/fail.",
           "把产品目标转化为功耗、散热、面积、可靠性与进度预算，并定义通过标准。",
@@ -383,7 +403,7 @@ export const WORKFLOW_TRACKS = {
       },
       {
         id: "architecture",
-        title: tr("Architecture and trade-offs", "架构与权衡", "Architecture et compromis"),
+        title: tr("Architecture and trade-offs", "架构与权衡", "Architecture et compromis", "アーキテクチャとトレードオフ"),
         action: tr(
           "Define blocks and interfaces, allocate budgets, and identify the physical test that could falsify the concept.",
           "定义模块与接口，分配预算，并找出能证伪概念的关键物理测试。",
@@ -395,7 +415,7 @@ export const WORKFLOW_TRACKS = {
       },
       {
         id: "design",
-        title: tr("Design and review", "设计与评审", "Conception et revue"),
+        title: tr("Design and review", "设计与评审", "Conception et revue", "設計とレビュー"),
         action: tr(
           "Implement or verify the design, run cross-functional reviews and keep every change traceable.",
           "实现或验证设计，进行跨职能评审，并保持所有变更可追溯。",
@@ -407,7 +427,7 @@ export const WORKFLOW_TRACKS = {
       },
       {
         id: "bringup",
-        title: tr("Verify and bring up", "验证与回片", "Vérifier et bring-up"),
+        title: tr("Verify and bring up", "验证与回片", "Vérifier et bring-up", "検証と実機立ち上げ"),
         action: tr(
           "Run simulation, corner cases and real-device bring-up; isolate design, manufacturing and environment effects.",
           "执行仿真、边界条件与真实设备回片，隔离设计、制造与环境因素。",
@@ -419,7 +439,7 @@ export const WORKFLOW_TRACKS = {
       },
       {
         id: "qualify",
-        title: tr("Qualify and transfer", "认证与转产", "Qualifier et transférer"),
+        title: tr("Qualify and transfer", "认证与转产", "Qualifier et transférer", "認定と量産移管"),
         action: tr(
           "Complete reliability, yield and field-readiness checks, then hand off with open risks explicit.",
           "完成可靠性、良率与现场准备检查，并在明确剩余风险后移交。",
@@ -432,28 +452,30 @@ export const WORKFLOW_TRACKS = {
     ]
   },
   ops: {
-    label: tr("Program launch and operating loop", "项目发布与运营闭环", "Boucle lancement et opérations"),
+    label: tr("Program launch and operating loop", "项目发布与运营闭环", "Boucle lancement et opérations", "プログラム立上げと運用"),
     summary: tr(
       "Make complex delivery visible, decide under incomplete information and leave behind an operating mechanism.",
       "让复杂交付可见，在信息不完整时做出决策，并留下可持续运作的机制。",
-      "Rendre la delivery visible, décider avec une information incomplète et laisser un mécanisme opérationnel."
+      "Rendre la delivery visible, décider avec une information incomplète et laisser un mécanisme opérationnel.",
+      "複雑なデリバリーを可視化し、不完全な情報で判断し、運用できる仕組みを残します。"
     ),
-    collaborators: tr("Owners, engineering, business, support, leadership", "各负责人、工程、业务、客服、管理层", "Owners, ingénierie, business, support, direction"),
+    collaborators: tr("Owners, engineering, business, support, leadership", "各负责人、工程、业务、客服、管理层", "Owners, ingénierie, business, support, direction", "各オーナー、エンジニアリング、事業、サポート、経営"),
     scenario: {
-      title: tr("Two dependencies late before launch", "发布前两个依赖延期", "Deux dépendances en retard"),
+      title: tr("Two dependencies late before launch", "发布前两个依赖延期", "Deux dépendances en retard", "公開前に2つの依存が遅延"),
       brief: tr(
         "A global launch has two late dependencies and the team wants to remove load testing.",
         "一次全球发布有两个依赖延期，而团队希望取消压测。",
-        "Un lancement mondial a deux dépendances en retard et l'équipe veut supprimer le load test."
+        "Un lancement mondial a deux dépendances en retard et l'équipe veut supprimer le load test.",
+        "グローバル公開の依存2件が遅延。チームは負荷試験を省こうとしています。"
       ),
-      stakeholder: tr("Engineering, business, support, regional leads", "工程、业务、客服、区域负责人", "Ingénierie, business, support, responsables régionaux"),
-      success: tr("A defensible go/no-go with explicit residual risk and rollback", "形成可辩护的发布/不发布决策，并明确剩余风险与回滚", "Un go/no-go défendable avec risque résiduel et rollback"),
-      risk: tr("Heroic optimism masking a systemic readiness gap", "英雄式乐观掩盖系统性准备不足", "Un optimisme héroïque masquant un déficit systémique")
+      stakeholder: tr("Engineering, business, support, regional leads", "工程、业务、客服、区域负责人", "Ingénierie, business, support, responsables régionaux", "エンジニアリング、事業、サポート、地域責任者"),
+      success: tr("A defensible go/no-go with explicit residual risk and rollback", "形成可辩护的发布/不发布决策，并明确剩余风险与回滚", "Un go/no-go défendable avec risque résiduel et rollback", "残余リスクと切り戻しを明示した説明可能なGo/No-Go"),
+      risk: tr("Heroic optimism masking a systemic readiness gap", "英雄式乐观掩盖系统性准备不足", "Un optimisme héroïque masquant un déficit systémique", "英雄的楽観が体系的な準備不足を隠す")
     },
     stages: [
       {
         id: "mandate",
-        title: tr("Mandate and stakeholders", "任务授权与利益相关者", "Mandat et parties prenantes"),
+        title: tr("Mandate and stakeholders", "任务授权与利益相关者", "Mandat et parties prenantes", "任務とステークホルダー"),
         action: tr(
           "Clarify the outcome, decision rights, customer impact and constraints; make the sponsor explicit.",
           "澄清目标、决策权、客户影响与约束，并明确项目发起人。",
@@ -465,7 +487,7 @@ export const WORKFLOW_TRACKS = {
       },
       {
         id: "dependencies",
-        title: tr("Map dependencies and risk", "梳理依赖与风险", "Cartographier dépendances et risques"),
+        title: tr("Map dependencies and risk", "梳理依赖与风险", "Cartographier dépendances et risques", "依存関係とリスクを整理"),
         action: tr(
           "Find the critical path, name owners and define escalation thresholds before they become surprises.",
           "找出关键路径，明确负责人，并在问题变成意外前定义升级阈值。",
@@ -477,7 +499,7 @@ export const WORKFLOW_TRACKS = {
       },
       {
         id: "plan",
-        title: tr("Build the delivery cadence", "建立交付节奏", "Construire la cadence"),
+        title: tr("Build the delivery cadence", "建立交付节奏", "Construire la cadence", "デリバリーのリズムを構築"),
         action: tr(
           "Set milestones, operating reviews, communication and realistic buffers; define what evidence closes each gate.",
           "设置里程碑、运营评审、沟通与合理缓冲，并定义每个门槛需要什么证据。",
@@ -489,7 +511,7 @@ export const WORKFLOW_TRACKS = {
       },
       {
         id: "readiness",
-        title: tr("Test launch readiness", "检验发布准备", "Tester la readiness"),
+        title: tr("Test launch readiness", "检验发布准备", "Tester la readiness", "公開準備を検証"),
         action: tr(
           "Review evidence, dependencies, rollback and residual risk; give decision-makers options, not optimism.",
           "审查证据、依赖、回滚与剩余风险；向决策者提供选项，而不是乐观情绪。",
@@ -501,7 +523,7 @@ export const WORKFLOW_TRACKS = {
       },
       {
         id: "operate",
-        title: tr("Operate and learn", "运营与复盘", "Opérer et apprendre"),
+        title: tr("Operate and learn", "运营与复盘", "Opérer et apprendre", "運用して振り返る"),
         action: tr(
           "Run the launch room, monitor signals, resolve incidents and close the loop with a blameless retro.",
           "运行发布指挥室，监控信号，处理事故，并以无责复盘完成闭环。",
@@ -525,12 +547,13 @@ export const DECISION_NODES = [
     prompt: tr(
       "The deadline is close. A shortcut could protect the date, but it hides a key risk. What do you do?",
       "截止日期已经逼近。一个捷径能保住时间，但会掩盖关键风险。你会怎么做？",
-      "La date approche. Un raccourci protège le calendrier mais cache un risque clé. Que faites-vous ?"
+      "La date approche. Un raccourci protège le calendrier mais cache un risque clé. Que faites-vous ?",
+      "納期が迫っています。近道すれば日程は守れますが、重要なリスクが見えなくなります。どうしますか？"
     ),
     options: [
       {
         id: "speed",
-        label: tr("Take the shortcut and monitor later", "先走捷径，之后再补监控", "Prendre le raccourci et monitorer plus tard"),
+        label: tr("Take the shortcut and monitor later", "先走捷径，之后再补监控", "Prendre le raccourci et monitorer plus tard", "近道して後から監視する"),
         outcome: tr(
           "You protect the date, but the failure mode becomes harder to see. The next decision starts with more risk.",
           "你保住了时间，但失败模式变得更难看见，下一项决策的风险更高。",
@@ -542,7 +565,7 @@ export const DECISION_NODES = [
       },
       {
         id: "scope",
-        label: tr("Cut scope and keep the guardrail", "缩小范围，保留护栏", "Réduire le périmètre et garder le garde-fou"),
+        label: tr("Cut scope and keep the guardrail", "缩小范围，保留护栏", "Réduire le périmètre et garder le garde-fou", "範囲を削りガードレールを守る"),
         outcome: tr(
           "You deliver less, but the core path remains observable and reversible. The team can make the next call with evidence.",
           "你少交付了一部分，但核心路径仍可观测、可回滚，团队能用证据做下一步决策。",
@@ -554,7 +577,7 @@ export const DECISION_NODES = [
       },
       {
         id: "escalate",
-        label: tr("Escalate the trade-off with evidence", "带着证据升级权衡", "Escalader le compromis avec des preuves"),
+        label: tr("Escalate the trade-off with evidence", "带着证据升级权衡", "Escalader le compromis avec des preuves", "証拠を添えて判断を委ねる"),
         outcome: tr(
           "The decision moves to the right owner with options and residual risk stated. You preserve trust, though not total control.",
           "决策被交给正确的负责人，并明确选项与剩余风险。你守住了信任，但不是全部控制权。",
@@ -572,12 +595,13 @@ export const DECISION_NODES = [
     prompt: tr(
       "The headline metric is green, but a high-severity customer slice is getting worse. What do you do next?",
       "主指标看起来很好，但一个高风险客户切片正在恶化。你接下来怎么做？",
-      "La métrique principale est au vert, mais un segment client critique se dégrade. Que faites-vous ?"
+      "La métrique principale est au vert, mais un segment client critique se dégrade. Que faites-vous ?",
+      "主要指標は良好ですが、高リスクの顧客セグメントが悪化しています。次に何をしますか？"
     ),
     options: [
       {
         id: "headline",
-        label: tr("Trust the headline metric and keep moving", "相信主指标，继续推进", "Faire confiance à la métrique principale"),
+        label: tr("Trust the headline metric and keep moving", "相信主指标，继续推进", "Faire confiance à la métrique principale", "主要指標を信じて進む"),
         outcome: tr(
           "The average looks healthy, but the severe failure remains latent. You have optimized the story, not the system.",
           "平均值看起来健康，但严重失败仍然潜伏。你优化了叙事，而不是系统。",
@@ -589,7 +613,7 @@ export const DECISION_NODES = [
       },
       {
         id: "slice",
-        label: tr("Inspect the high-severity slice first", "先检查高风险切片", "Inspecter d'abord le segment critique"),
+        label: tr("Inspect the high-severity slice first", "先检查高风险切片", "Inspecter d'abord le segment critique", "高リスク区分を先に調べる"),
         outcome: tr(
           "You find that the failure is concentrated and reproducible. The wider rollout pauses while the team fixes the real risk.",
           "你发现失败集中在特定条件且可复现。团队暂停扩量，转而修复真实风险。",
@@ -601,7 +625,7 @@ export const DECISION_NODES = [
       },
       {
         id: "wait",
-        label: tr("Wait for more data without a decision rule", "等更多数据，但没有决策规则", "Attendre plus de données sans règle de décision"),
+        label: tr("Wait for more data without a decision rule", "等更多数据，但没有决策规则", "Attendre plus de données sans règle de décision", "判断基準なしで追加データを待つ"),
         outcome: tr(
           "The team keeps collecting evidence without agreeing on what would stop the rollout. Time passes; the risk does not.",
           "团队持续收集证据，却没有约定什么情况下停止扩展。时间过去了，风险没有。",
@@ -619,12 +643,13 @@ export const DECISION_NODES = [
     prompt: tr(
       "You can launch now with a known residual risk, or stage the release and delay part of the upside. What do you choose?",
       "现在可以带着已知剩余风险发布，也可以分阶段发布并延后一部分收益。你怎么选？",
-      "Vous pouvez lancer avec un risque résiduel connu, ou déployer par étapes en retardant une partie du gain. Que choisissez-vous ?"
+      "Vous pouvez lancer avec un risque résiduel connu, ou déployer par étapes en retardant une partie du gain. Que choisissez-vous ?",
+      "既知の残余リスクを抱えて今すぐ公開するか、段階公開して一部の成果を遅らせるか。どう選びますか？"
     ),
     options: [
       {
         id: "full",
-        label: tr("Launch fully and react if needed", "全面发布，出问题再反应", "Lancer partout et réagir si nécessaire"),
+        label: tr("Launch fully and react if needed", "全面发布，出问题再反应", "Lancer partout et réagir si nécessaire", "全面公開して問題時に対応"),
         outcome: tr(
           "The upside arrives immediately, but the blast radius is now the whole market. Recovery becomes a major incident.",
           "收益立即兑现，但影响面变成整个市场，恢复也将升级为重大事故。",
@@ -636,7 +661,7 @@ export const DECISION_NODES = [
       },
       {
         id: "canary",
-        label: tr("Stage the release with a rollback gate", "分阶段发布并设置回滚门槛", "Déployer par étapes avec porte de rollback"),
+        label: tr("Stage the release with a rollback gate", "分阶段发布并设置回滚门槛", "Déployer par étapes avec porte de rollback", "切り戻し条件付きで段階公開"),
         outcome: tr(
           "A smaller population absorbs the uncertainty. You catch the edge case before it becomes the headline.",
           "更小的人群先承受不确定性，你在边缘问题变成头条前发现了它。",
@@ -648,7 +673,7 @@ export const DECISION_NODES = [
       },
       {
         id: "block",
-        label: tr("Block launch until the risk is eliminated", "在风险完全消除前阻止发布", "Bloquer jusqu'à élimination du risque"),
+        label: tr("Block launch until the risk is eliminated", "在风险完全消除前阻止发布", "Bloquer jusqu'à élimination du risque", "リスク除去まで公開を止める"),
         outcome: tr(
           "You avoid the known harm but also block learning and delay value. The team still needs a decision rule for what is good enough.",
           "你避免了已知伤害，却也阻止了学习和价值兑现。团队仍然需要一个“足够好”的决策规则。",

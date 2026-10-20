@@ -1,3 +1,5 @@
+import { JA_UI } from "./i18n-ja.js";
+
 export const UI = {
   en: {
     brand: { name: "High Table", sub: "Recruitment Institute" },
@@ -33,6 +35,7 @@ export const UI = {
       allRegions: "All regions",
       regionCn: "Mainland China",
       regionHk: "Hong Kong",
+      regionJp: "Japan",
       regionUs: "US & global",
       allTracks: "All tracks",
       allLevels: "All levels",
@@ -69,6 +72,7 @@ export const UI = {
       usdNote: "US-market annual total compensation benchmark, USD thousands. Not an offer.",
       cnyNote: "Mainland China annual package benchmark, CNY millions. Cash/equity mix and tax vary.",
       hkdNote: "Hong Kong annual package benchmark, HKD thousands. Cash bonus, MPF and benefits vary by grade.",
+      jpyNote: "Japan annual total compensation benchmark, JPY millions. Bonus, equity and grade structure vary widely.",
       reviewNote: "Directional benchmark · 2025–26 public data · reviewed 2026.10",
       savedToast: "Saved to your briefcase.",
       removedToast: "Removed from your briefcase.",
@@ -107,6 +111,7 @@ export const UI = {
       orbitLabel: "LIVE ROLE GRAPH",
       orbitScopeGlobal: "GLOBAL + HONG KONG",
       orbitScopeCn: "MAINLAND + HONG KONG",
+      orbitScopeJp: "JAPAN + HONG KONG",
       readoutLabel: "SIGNAL DENSITY",
       readoutFoot: "{companies} firms · 6 tracks · 3 markets",
       tickerLabel: "THE TABLE",
@@ -195,6 +200,7 @@ export const UI = {
       usdLabel: "USD / year",
       cnyLabel: "CNY / year",
       hkdLabel: "HKD / year",
+      jpyLabel: "JPY / year",
       roleCount: "roles"
     },
     company: {
@@ -570,6 +576,7 @@ export const UI = {
       allRegions: "全部地区",
       regionCn: "中国大陆",
       regionHk: "香港",
+      regionJp: "日本",
       regionUs: "美国与全球",
       allTracks: "全部方向",
       allLevels: "全部职级",
@@ -606,6 +613,7 @@ export const UI = {
       usdNote: "美国市场年度总包基准，单位：千美元。并非 offer。",
       cnyNote: "中国大陆年度总包基准，单位：百万元人民币。现金/股权比例与税制各不相同。",
       hkdNote: "香港年度总包基准，单位：千港元。现金奖金、强积金与福利会因职级不同。",
+      jpyNote: "日本年度总包基准，单位：百万日元。奖金、股权与职级结构差异较大。",
       reviewNote: "方向性基准 · 2025–26 公开数据 · 2026.10 复核",
       savedToast: "已放入你的公文包。",
       removedToast: "已从公文包移除。",
@@ -644,6 +652,7 @@ export const UI = {
       orbitLabel: "实时岗位图谱",
       orbitScopeGlobal: "国际企业 + 香港",
       orbitScopeCn: "中国大陆 + 香港",
+      orbitScopeJp: "日本 + 香港",
       readoutLabel: "信号密度",
       readoutFoot: "{companies} 家公司 · 6 个方向 · 3 个市场",
       tickerLabel: "主桌",
@@ -732,6 +741,7 @@ export const UI = {
       usdLabel: "美元 / 年",
       cnyLabel: "人民币 / 年",
       hkdLabel: "港元 / 年",
+      jpyLabel: "日元 / 年",
       roleCount: "个岗位"
     },
     company: {
@@ -1107,6 +1117,7 @@ export const UI = {
       allRegions: "Toutes les régions",
       regionCn: "Chine continentale",
       regionHk: "Hong Kong",
+      regionJp: "Japon",
       regionUs: "États-Unis et international",
       allTracks: "Toutes les familles",
       allLevels: "Tous les niveaux",
@@ -1143,6 +1154,7 @@ export const UI = {
       usdNote: "Repère annuel de rémunération totale pour le marché américain, en milliers USD. Pas une offre.",
       cnyNote: "Repère annuel pour la Chine continentale, en millions CNY. Mix cash/actions et fiscalité variables.",
       hkdNote: "Repère annuel pour Hong Kong, en milliers HKD. Bonus cash, MPF et avantages varient selon le grade.",
+      jpyNote: "Repère annuel de rémunération totale au Japon, en millions JPY. Bonus, actions et grades varient fortement.",
       reviewNote: "Repère directionnel · données publiques 2025–26 · révisé 2026.10",
       savedToast: "Ajouté à votre mallette.",
       removedToast: "Retiré de votre mallette.",
@@ -1181,6 +1193,7 @@ export const UI = {
       orbitLabel: "GRAPHE DE RÔLES",
       orbitScopeGlobal: "INTERNATIONAL + HONG KONG",
       orbitScopeCn: "CHINE CONTINENTALE + HONG KONG",
+      orbitScopeJp: "JAPON + HONG KONG",
       readoutLabel: "DENSITÉ DU SIGNAL",
       readoutFoot: "{companies} firmes · 6 familles · 3 marchés",
       tickerLabel: "LA TABLE",
@@ -1269,6 +1282,7 @@ export const UI = {
       usdLabel: "USD / an",
       cnyLabel: "CNY / an",
       hkdLabel: "HKD / an",
+      jpyLabel: "JPY / an",
       roleCount: "rôles"
     },
     company: {
@@ -1608,11 +1622,13 @@ export const UI = {
       disclaimer: "Avertissement",
       independent: "Indépendant · Non affilié à un employeur"
     }
-  }
+  },
+  ja: JA_UI
 };
 
 export const LANGUAGES = [
   { code: "en", short: "EN", name: "English" },
   { code: "zh", short: "中", name: "中文" },
+  { code: "ja", short: "JA", name: "日本語" },
   { code: "fr", short: "FR", name: "Français" }
 ];

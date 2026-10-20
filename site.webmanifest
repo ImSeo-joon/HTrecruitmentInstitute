@@ -1,7 +1,7 @@
 {
   "name": "High Table Recruitment Institute",
   "short_name": "High Table",
-  "description": "An independent atlas of competitive roles, pay architecture, work intensity, and interview signals.",
+  "description": "An independent atlas of competitive roles, pay architecture, work intensity, and interview signals across global, Chinese, Hong Kong and Japanese employers.",
   "id": "./",
   "start_url": "./?source=pwa",
   "scope": "./",
@@ -49,7 +49,7 @@
     {
       "name": "Role Atlas",
       "short_name": "Roles",
-      "description": "Explore calibrated role briefs across global and China/HK employers",
+      "description": "Explore calibrated role briefs across global, China/HK and Japanese employers",
       "url": "./#/roles",
       "icons": [
         {
